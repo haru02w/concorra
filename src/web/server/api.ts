@@ -1,7 +1,7 @@
 import "server-only";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import type { Actor } from "@/application/use-cases/context";
+import type { Actor } from "@/modules/shared/context";
 import { DomainError, ForbiddenError, LimitExceededError, NotFoundError, ValidationError } from "@/domain/shared/errors";
 import { getSession, type Session } from "./session";
 

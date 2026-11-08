@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ActionForm } from "@/web/components/action-form";
 import { SubmitButton } from "@/web/components/submit-button";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
-import { deleteOrganizationAction, disconnectCalendarAction, inviteAction } from "./actions";
+import { disconnectCalendarAction } from "@/modules/calendar/calendar.actions";
+import { deleteOrganizationAction, inviteAction } from "@/modules/organizations/organizations.actions";
 
 export const metadata = { title: "Configurações" };
 
@@ -20,11 +21,8 @@ const PROVIDERS: Record<string, string> = { google: "Google Agenda", microsoft: 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ calendar?: string }> }) {
   const { calendar } = await searchParams;
   const { actor, session } = await requireActor();
-  const deps = getDeps();
-  const [members, calendars] = await Promise.all([
-    deps.memberships.listByOrg(actor.organizationId),
-    deps.calendars.listByUser(actor.userId, actor.organizationId),
-  ]);
+  const services = getServices();
+  const [members, calendars] = await Promise.all([services.organizations.listMembers(actor), services.calendar.listConnections(actor)]);
   const owner = canManage(actor.role);
   const org = session.organization!;
 

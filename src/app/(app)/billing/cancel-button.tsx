@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ActionForm } from "@/web/components/action-form";
-import { cancelAction } from "./actions";
+import { cancelAction } from "@/modules/billing/billing.actions";
 
 export function CancelSubscriptionButton() {
   return (

@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CheckCircle2Icon, CircleIcon, DownloadIcon, ExternalLinkIcon, InfoIcon, Loader2Icon } from "lucide-react";
 import { PACK_STEPS, type PackStepKey } from "@/domain/bid/bid";
 import { DOCUMENT_KIND_LABELS } from "@/domain/documents/document";
-import { noticeLink } from "@/application/use-cases/radar";
+import { noticeLink } from "@/domain/notice/notice";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,11 +15,12 @@ import { AutoRefresh } from "@/web/components/auto-refresh";
 import { formatCents, formatDate, formatDateTime, formatMoney } from "@/web/components/format";
 import { StatusBadge } from "@/web/components/status-badge";
 import { SubmitButton } from "@/web/components/submit-button";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
+import { orNotFound } from "@/web/server/page";
 import { requireActor } from "@/web/server/session";
 import { ConfirmSubmit } from "../confirm-submit";
 import { Markdown } from "../markdown";
-import { approveDocument, cancel, markReady, markSubmitted, savePrices } from "./actions";
+import { approveDocument, cancel, markReady, markSubmitted, savePrices } from "@/modules/bids/bids.actions";
 import { DocEditor } from "./doc-editor";
 
 export const metadata: Metadata = { title: "Licitação" };
@@ -46,24 +46,15 @@ const centsToInput = (cents: number | null) => (cents === null ? "" : (cents / 1
 export default async function BidPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { actor } = await requireActor();
-  const deps = getDeps();
-  const bid = await deps.bids.findById(actor.organizationId, id);
-  if (!bid) notFound();
-  const notice = await deps.notices.findById(bid.noticeId);
-  if (!notice) notFound();
-
-  const [checklist, lines, refs, generated] = await Promise.all([
-    deps.bids.getChecklist(bid.id),
-    deps.bids.getProposalLines(bid.id),
-    deps.bids.getPriceReferences(bid.id),
-    deps.generatedDocs.listByBid(bid.id),
-  ]);
-  const vaultFiles = new Map<string, string>();
-  for (const gap of checklist) {
-    if (!gap.documentId || vaultFiles.has(gap.documentId)) continue;
-    const doc = await deps.documents.findById(actor.organizationId, gap.documentId);
-    if (doc) vaultFiles.set(gap.documentId, doc.fileId);
-  }
+  const {
+    bid,
+    notice,
+    checklist,
+    proposalLines: lines,
+    priceReferences: refs,
+    documents: generated,
+    vaultFileIds,
+  } = await orNotFound(getServices().bids.getBidDetail(actor, id));
   const instructions = generated.find((d) => d.kind === "instructions");
   const docs = generated.filter((d) => d.kind !== "instructions");
   const building = bid.status === "participating" && (bid.packStatus === "building" || bid.packStatus === "idle");
@@ -167,7 +158,7 @@ export default async function BidPage({ params }: { params: Promise<{ id: string
               </TableHeader>
               <TableBody>
                 {checklist.map((gap) => {
-                  const fileId = gap.documentId ? vaultFiles.get(gap.documentId) : undefined;
+                  const fileId = gap.documentId ? vaultFileIds[gap.documentId] : undefined;
                   return (
                     <TableRow key={gap.requirementId}>
                       <TableCell className="max-w-md whitespace-normal">

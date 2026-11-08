@@ -1,6 +1,5 @@
 import { formatBrl, PLANS, type LimitedMetric } from "@/domain/billing/plans";
 import { canManage } from "@/domain/organization/organization";
-import { getUsageSummary } from "@/application/use-cases/billing";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { ActionForm } from "@/web/components/action-form";
 import { formatDate } from "@/web/components/format";
 import { SubmitButton } from "@/web/components/submit-button";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
-import { checkoutAction } from "./actions";
+import { checkoutAction } from "@/modules/billing/billing.actions";
 import { CancelSubscriptionButton } from "./cancel-button";
 
 export const metadata = { title: "Plano" };
@@ -28,7 +27,7 @@ const limitText = (n: number | null) => (n === null ? "Ilimitado" : String(n));
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
   const { checkout } = await searchParams;
   const { actor } = await requireActor();
-  const { plan, period, subscription, used } = await getUsageSummary(getDeps(), actor.organizationId);
+  const { plan, period, subscription, used } = await getServices().billing.getUsageSummary(actor.organizationId);
   const owner = canManage(actor.role);
 
   return (

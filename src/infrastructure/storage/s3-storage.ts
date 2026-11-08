@@ -7,7 +7,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import type { FileStorage } from "@/application/ports";
+import type { FileStorage } from "@/modules/shared/ports";
 
 export interface S3StorageOptions {
   bucket: string;

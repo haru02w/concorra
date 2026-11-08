@@ -2,10 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { EDITAL_PAGES, makeDoc, makeItem, makeNotice, makeOrg } from "@/domain/fixtures";
 import { EMBEDDING_DIMENSIONS, l2normalize } from "@/domain/shared/vector";
 import { EMPTY_FILTERS } from "@/domain/rules/rule";
-import { makeTestDeps } from "@/application/testing/in-memory";
-import { matchNotice } from "@/application/use-cases/rules";
-import { runAnalysis } from "@/application/use-cases/analysis";
-import { buildBidPack, decideParticipation } from "@/application/use-cases/bids";
+import { createServices } from "@/modules/services";
+import { makeTestDeps } from "@/modules/shared/testing/in-memory";
 import type { Db } from "./client";
 import { createRepositories } from "./repositories";
 import { createTestDb } from "./test-db";
@@ -163,7 +161,7 @@ describe("use cases on Postgres", () => {
   it("match → analysis → participate → bid pack", async () => {
     const fakes = makeTestDeps();
     fakes.ai.dims = EMBEDDING_DIMENSIONS;
-    const deps = { ...fakes, ...repos };
+    const services = createServices({ ...fakes, ...repos });
     const org = await seedOrg();
     const user = await repos.users.upsert({ workosUserId: "u1", email: "owner@x.y", name: null });
     await repos.memberships.upsert(org.id, user.id, "owner");
@@ -177,15 +175,15 @@ describe("use cases on Postgres", () => {
     fakes.ai.extraction = extraction;
     await repos.rules.create({ organizationId: org.id, name: "Limpeza", filters: { ...EMPTY_FILTERS, keywordsInclude: ["limpeza"] }, semanticThreshold: null, minScore: null, channels: ["email"], frequency: "immediate", active: true });
 
-    await matchNotice(deps, { noticeId: notice.id });
+    await services.rules.matchNotice({ noticeId: notice.id });
     const [{ analysisId }] = fakes.jobs.of("analysis.run");
-    const analysis = await runAnalysis(deps, { analysisId });
+    const analysis = await services.analysis.runAnalysis({ analysisId });
     expect(analysis.status).toBe("done");
     expect(analysis.citationReport?.failedPaths).toEqual([]);
 
     const actor = { userId: user.id, workosUserId: "u1", email: user.email, organizationId: org.id, role: "owner" as const };
-    const bid = await decideParticipation(deps, actor, { noticeId: notice.id, decision: "participate" });
-    const built = await buildBidPack(deps, { bidId: bid.id });
+    const bid = await services.bids.decideParticipation(actor, { noticeId: notice.id, decision: "participate" });
+    const built = await services.bids.buildBidPack({ bidId: bid.id });
     expect(built.packStatus).toBe("done");
     expect((await repos.generatedDocs.listByBid(bid.id)).length).toBeGreaterThanOrEqual(4);
     expect(await repos.usage.get(org.id, "bidPacks", "2026-11")).toBe(1);

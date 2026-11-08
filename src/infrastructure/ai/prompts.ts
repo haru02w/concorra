@@ -1,4 +1,4 @@
-import type { DraftRequest, PageText } from "@/application/ports";
+import type { DraftRequest, PageText } from "@/modules/shared/ports";
 import type { NoticeExtraction } from "@/domain/analysis/extraction";
 import { DOCUMENT_KINDS, DOCUMENT_KIND_LABELS } from "@/domain/documents/document";
 

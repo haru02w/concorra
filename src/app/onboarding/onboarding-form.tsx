@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { UFS } from "@/domain/notice/notice";
 import { ActionForm } from "@/web/components/action-form";
 import { SubmitButton } from "@/web/components/submit-button";
-import { createOrganizationAction, lookupAction } from "./actions";
+import { createOrganizationAction, lookupAction } from "@/modules/organizations/organizations.actions";
 
 const selectClass = "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm";
 

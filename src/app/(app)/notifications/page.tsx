@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { listNotifications } from "@/application/use-cases/notifications";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ActionForm } from "@/web/components/action-form";
 import { formatDateTime } from "@/web/components/format";
 import { SubmitButton } from "@/web/components/submit-button";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
-import { markAllReadAction } from "./actions";
+import { markAllReadAction } from "@/modules/notifications/notifications.actions";
 
 export const metadata = { title: "Notificações" };
 
@@ -23,7 +22,7 @@ const TYPES: Record<string, string> = {
 
 export default async function NotificationsPage() {
   const { actor } = await requireActor();
-  const notifications = await listNotifications(getDeps(), actor);
+  const notifications = await getServices().notifications.listNotifications(actor);
   const unread = notifications.some((n) => !n.readAt);
 
   return (

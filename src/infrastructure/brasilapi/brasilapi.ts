@@ -1,4 +1,4 @@
-import type { CompanyData, CompanyLookup } from "@/application/ports";
+import type { CompanyData, CompanyLookup } from "@/modules/shared/ports";
 import { parsePorte } from "@/domain/organization/organization";
 import { onlyDigits } from "@/domain/shared/cnpj";
 

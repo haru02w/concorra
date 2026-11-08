@@ -1,6 +1,6 @@
 import { WorkOS } from "@workos-inc/node";
 import type { PgBoss } from "pg-boss";
-import type { Deps, PaymentGateway } from "@/application/ports";
+import type { Deps, PaymentGateway } from "@/modules/shared/ports";
 import { createGeminiAiGateway } from "./ai/gemini-gateway";
 import { JsZipArchiver } from "./archive/jszip-archiver";
 import { BrasilApiCompanyLookup } from "./brasilapi/brasilapi";
@@ -20,6 +20,7 @@ import { PandocRenderer } from "./render/pandoc-renderer";
 import { S3FileStorage } from "./storage/s3-storage";
 import { createMockFetch } from "./mock/mock-fetch";
 import { MockOutbox, mockResendClient, mockWorkOsClient } from "./mock/outbox";
+import { createServices, type Services } from "@/modules/services";
 
 /** Placeholder for an integration whose env vars are missing: fails loudly when used. */
 export function unconfigured<T extends object>(name: string, envVars: string): T {
@@ -47,6 +48,7 @@ export interface Container {
   jobs: PgBossJobQueue;
   storage: S3FileStorage;
   deps: Deps;
+  services: Services;
 }
 
 export function createContainer(role: "web" | "worker", env: Env = loadEnv()): Container {
@@ -139,5 +141,5 @@ export function createContainer(role: "web" | "worker", env: Env = loadEnv()): C
     payments,
     identity,
   };
-  return { env, outbox, db, boss, jobs, storage, deps };
+  return { env, outbox, db, boss, jobs, storage, deps, services: createServices(deps) };
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { MODALIDADES, UFS, type Notice } from "@/domain/notice/notice";
-import { searchNotices } from "@/application/use-cases/radar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { daysUntil, formatDate, formatMoney } from "@/web/components/format";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
 
 export const metadata = { title: "Radar" };
@@ -93,7 +92,7 @@ function Affinity({ similarity }: { similarity: number | null }) {
 
 async function Matches() {
   const { actor } = await requireActor();
-  const matches = await getDeps().matches.listByOrg(actor.organizationId, 50);
+  const matches = await getServices().rules.listMatches(actor, 50);
   if (!matches.length) {
     return (
       <Card>
@@ -147,7 +146,7 @@ async function Search({ sp }: { sp: Record<string, string | string[] | undefined
   // Checkbox: absent on first visit → default on; the hidden "f" field marks a submitted form.
   const openOnly = param(sp.f) ? param(sp.open) === "1" : true;
   const page = Math.max(1, Number(param(sp.page)) || 1);
-  const { rows, total } = await searchNotices(getDeps(), actor, {
+  const { rows, total } = await getServices().notices.searchNotices(actor, {
     query: query || undefined,
     uf: uf || undefined,
     modalidadeId: modalidade ? Number(modalidade) : undefined,

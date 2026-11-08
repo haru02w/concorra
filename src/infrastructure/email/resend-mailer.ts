@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import type { Mailer } from "@/application/ports";
+import type { Mailer } from "@/modules/shared/ports";
 
 type Message = Parameters<Mailer["send"]>[0];
 type ResendLike = { emails: { send(payload: { from: string; to: string[]; subject: string; html: string; text: string }): Promise<{ error: { message: string } | null }> } };

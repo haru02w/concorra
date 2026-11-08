@@ -4,8 +4,8 @@ import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { refreshSession, switchToOrganization, withAuth } from "@workos-inc/authkit-nextjs";
-import { resolveSession, type ResolvedSession } from "@/application/use-cases/auth";
-import type { Actor } from "@/application/use-cases/context";
+import type { ResolvedSession } from "@/modules/auth/auth.service";
+import type { Actor } from "@/modules/shared/context";
 import type { Organization } from "@/domain/organization/organization";
 import { ForbiddenError } from "@/domain/shared/errors";
 import { localSessionsEnabled, workosConfigured } from "@/infrastructure/config/env";
@@ -47,27 +47,14 @@ async function readLocalSession(value: string): Promise<LocalSession | null> {
 }
 
 async function localSession(raw: LocalSession): Promise<Session | null> {
-  const { deps } = getContainer();
-  const user = await deps.users.findById(raw.u);
-  if (!user) return null;
-  const organizations = await deps.memberships.listByUser(user.id);
-  const active = organizations.find((o) => o.organization.id === raw.o) ?? null;
-  return {
-    kind: "local",
-    demo: !!raw.d,
-    user,
-    organizations,
-    organization: active?.organization ?? null,
-    actor: active
-      ? { userId: user.id, workosUserId: user.workosUserId, email: user.email, organizationId: active.organization.id, role: active.role }
-      : null,
-  };
+  const session = await getContainer().services.auth.loadLocalSession(raw.u, raw.o);
+  return session && { ...session, kind: "local", demo: !!raw.d };
 }
 
 /** Current session: local cookie (demo/mock) or WorkOS AuthKit. */
 export const getSession = cache(async (): Promise<Session | null> => {
   await connection(); // per-request: never prerender at build time
-  const { env, deps } = getContainer();
+  const { env, services } = getContainer();
   if (localSessionsEnabled(env)) {
     const raw = (await cookies()).get(SESSION_COOKIE)?.value;
     const parsed = raw ? await readLocalSession(raw) : null;
@@ -77,7 +64,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
   if (!workosConfigured(env)) return null;
   const auth = await withAuth();
   if (!auth.user) return null;
-  const session = await resolveSession(deps, {
+  const session = await services.auth.resolveSession({
     workosUserId: auth.user.id,
     email: auth.user.email,
     name: [auth.user.firstName, auth.user.lastName].filter(Boolean).join(" ") || null,
@@ -102,8 +89,8 @@ export async function requireActor(): Promise<{ actor: Actor; session: Session }
 export async function setActiveOrganization(session: Session, organization: Organization): Promise<void> {
   if (!session.organizations.some((o) => o.organization.id === organization.id)) {
     // Freshly created organizations are not in the cached session yet: check membership directly.
-    const membership = await getContainer().deps.memberships.find(organization.id, session.user.id);
-    if (!membership) throw new ForbiddenError("Not a member of this organization");
+    const member = await getContainer().services.auth.isMember(organization.id, session.user.id);
+    if (!member) throw new ForbiddenError("Not a member of this organization");
   }
   if (session.kind === "local") await setLocalSession({ u: session.user.id, o: organization.id, d: session.demo });
   else await refreshSession({ organizationId: organization.workosOrgId, ensureSignedIn: true });
@@ -113,7 +100,7 @@ export async function setActiveOrganization(session: Session, organization: Orga
 export async function switchOrganization(organizationId: string, returnTo: string): Promise<never> {
   const session = await getSession();
   if (!session) redirect("/sign-in");
-  const organization = await getContainer().deps.organizations.findById(organizationId);
+  const organization = await getContainer().services.auth.findOrganization(organizationId);
   if (!organization) redirect("/onboarding");
   if (session.kind === "workos") await switchToOrganization(organization.workosOrgId, { returnTo });
   await setActiveOrganization(session, organization);

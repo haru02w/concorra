@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { PaymentEvent, PaymentGateway } from "@/application/ports";
+import type { PaymentEvent, PaymentGateway } from "@/modules/shared/ports";
 import { PLANS, type PlanId } from "@/domain/billing/plans";
 
 const BASE = "https://api.abacatepay.com/v2";

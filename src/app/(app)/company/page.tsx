@@ -12,9 +12,10 @@ import { ActionForm } from "@/web/components/action-form";
 import { AutoRefresh } from "@/web/components/auto-refresh";
 import { formatDate } from "@/web/components/format";
 import { SubmitButton } from "@/web/components/submit-button";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
-import { addExperienceAction, deleteExperienceAction, updateProfileAction, uploadExperienceAction } from "./actions";
+import { addExperienceAction, deleteExperienceAction, uploadExperienceAction } from "@/modules/experiences/experiences.actions";
+import { updateProfileAction } from "@/modules/organizations/organizations.actions";
 
 export const metadata = { title: "Empresa" };
 
@@ -33,7 +34,7 @@ function Field({ label, htmlFor, hint, children, className }: { label: string; h
 export default async function CompanyPage() {
   const { actor, session } = await requireActor();
   const org = session.organization!;
-  const experiences = await getDeps().experiences.listByOrg(org.id);
+  const experiences = await getServices().experiences.listExperiences(actor);
   const owner = canManage(actor.role);
   const ro = !owner;
   const processing = experiences.some((e) => e.object.startsWith("Processando"));

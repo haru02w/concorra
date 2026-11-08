@@ -1,4 +1,4 @@
-import type { CalendarProvider, OAuthTokens } from "@/application/ports";
+import type { CalendarProvider, OAuthTokens } from "@/modules/shared/ports";
 import type { DeadlineEvent } from "@/domain/calendar/deadlines";
 import { apiRequest, failOnError, tokenRequest, type OAuthClientOptions } from "./oauth";
 

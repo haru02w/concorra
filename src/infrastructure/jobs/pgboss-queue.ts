@@ -1,5 +1,5 @@
 import { PgBoss } from "pg-boss";
-import { JOB_NAMES, type JobName, type JobPayloads, type JobQueue } from "@/application/ports";
+import { JOB_NAMES, type JobName, type JobPayloads, type JobQueue } from "@/modules/shared/ports";
 
 type QueueOptions = Parameters<PgBoss["createQueue"]>[1];
 

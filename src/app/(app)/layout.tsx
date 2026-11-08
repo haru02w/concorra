@@ -4,14 +4,14 @@ import { PLANS } from "@/domain/billing/plans";
 import { formatCnpj } from "@/domain/shared/cnpj";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
 import { NavLinks } from "./nav-links";
 import { OrgSwitcher } from "./org-switcher";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { actor, session } = await requireActor();
-  const unread = await getDeps().notifications.countUnread(actor.organizationId, actor.userId);
+  const unread = await getServices().notifications.countUnread(actor);
   const org = session.organization!;
   return (
     <div className="flex min-h-screen">

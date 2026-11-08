@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { DocumentRenderer } from "@/application/ports";
+import type { DocumentRenderer } from "@/modules/shared/ports";
 
 const PDF_ARGS = [
   "--pdf-engine=pdflatex",

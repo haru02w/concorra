@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ActionForm } from "@/web/components/action-form";
 import { SubmitButton } from "@/web/components/submit-button";
-import { participateAction, requestAnalysisAction, skipAction } from "./actions";
+import { requestAnalysisAction } from "@/modules/analysis/analysis.actions";
+import { participateAction, skipAction } from "@/modules/bids/bids.actions";
 
 export function AnalyzeButton({ noticeId, force = false, label = "Analisar com IA" }: { noticeId: string; force?: boolean; label?: string }) {
   return (

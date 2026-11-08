@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ActionForm } from "@/web/components/action-form";
 import { SubmitButton } from "@/web/components/submit-button";
-import { deleteRuleAction, toggleRuleAction } from "./actions";
+import { deleteRuleAction, toggleRuleAction } from "@/modules/rules/rules.actions";
 
 export function RuleActions({ id, active }: { id: string; active: boolean }) {
   return (

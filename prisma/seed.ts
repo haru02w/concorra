@@ -3,8 +3,7 @@
  * Idempotent: re-running refreshes the demo org's documents and notice.
  */
 import "dotenv/config";
-import { embedProfile } from "@/application/use-cases/organizations";
-import { storeBytes } from "@/application/use-cases/context";
+import { storeBytes } from "@/modules/shared/context";
 import { EMPTY_FILTERS } from "@/domain/rules/rule";
 import { formatCnpj } from "@/domain/shared/cnpj";
 import { addDays } from "@/domain/shared/dates";
@@ -60,7 +59,7 @@ const CERTIDOES = [
 ];
 
 async function main() {
-  const { deps, storage, db, env } = createContainer("worker");
+  const { deps, services, storage, db, env } = createContainer("worker");
   await storage.ensureBucket();
   const now = new Date();
 
@@ -184,7 +183,7 @@ async function main() {
     const chunks = EDITAL_PAGES.flatMap((text, i) => chunkText(text).map((t) => ({ page: i + 1, text: t })));
     const embeddings = (await deps.ai.embed(chunks.map((c) => c.text), "document")).map(l2normalize);
     await deps.noticeFiles.saveChunks(file.id, chunks.map((c, i) => ({ ...c, embedding: embeddings[i] })));
-    await embedProfile(deps, { organizationId: org.id });
+    await services.organizations.embedProfile({ organizationId: org.id });
   } else {
     await deps.notices.replaceItems(notice.id, ITEMS, null);
     console.warn("[seed] GEMINI_API_KEY not set: skipped embeddings (semantic matching/ranking disabled)");

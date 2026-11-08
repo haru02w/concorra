@@ -1,5 +1,5 @@
 import { extractText, getDocumentProxy } from "unpdf";
-import type { PdfTextExtractor } from "@/application/ports";
+import type { PdfTextExtractor } from "@/modules/shared/ports";
 
 export class UnpdfTextExtractor implements PdfTextExtractor {
   async extractPages(bytes: Uint8Array): Promise<string[]> {

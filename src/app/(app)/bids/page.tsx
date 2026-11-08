@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
 import { StatusBadge } from "@/web/components/status-badge";
 import { daysUntil, formatDateTime } from "@/web/components/format";
@@ -13,7 +13,7 @@ const ACTIVE = ["participating", "ready", "submitted"];
 
 export default async function BidsPage() {
   const { actor } = await requireActor();
-  const bids = await getDeps().bids.listByOrg(actor.organizationId);
+  const bids = await getServices().bids.listBids(actor);
   const active = bids.filter((b) => ACTIVE.includes(b.status));
   const archived = bids.filter((b) => !ACTIVE.includes(b.status));
 

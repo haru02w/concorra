@@ -3,7 +3,7 @@ import { formatCnpj } from "@/domain/shared/cnpj";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSession } from "@/web/server/session";
-import { switchAction } from "./actions";
+import { switchAction } from "@/modules/organizations/organizations.actions";
 import { OnboardingForm } from "./onboarding-form";
 
 export const metadata = { title: "Cadastro da empresa" };

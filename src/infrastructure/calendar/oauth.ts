@@ -1,4 +1,4 @@
-import type { OAuthTokens } from "@/application/ports";
+import type { OAuthTokens } from "@/modules/shared/ports";
 
 export interface OAuthClientOptions {
   clientId: string;

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ActionForm } from "@/web/components/action-form";
 import { SubmitButton } from "@/web/components/submit-button";
 import { Markdown } from "../markdown";
-import { editDocument } from "./actions";
+import { editDocument } from "@/modules/bids/bids.actions";
 
 /** Preview + Markdown editor for one generated document. */
 export function DocEditor({ bidId, docId, title, markdown, editable }: { bidId: string; docId: string; title: string; markdown: string; editable: boolean }) {

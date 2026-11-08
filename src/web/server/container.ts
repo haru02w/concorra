@@ -9,6 +9,6 @@ export function getContainer(): Container {
   return globalForContainer.concorraWeb;
 }
 
-export function getDeps() {
-  return getContainer().deps;
+export function getServices() {
+  return getContainer().services;
 }

@@ -92,3 +92,12 @@ export function noticeSearchText(notice: Pick<Notice, "objeto" | "informacaoComp
     .filter(Boolean)
     .join("\n");
 }
+
+/** Public link to the notice: the process system first, PNCP as fallback. */
+export function noticeLink(notice: Pick<Notice, "linkSistemaOrigem" | "linkProcessoEletronico" | "orgaoCnpj" | "ano" | "sequencial">): string {
+  return (
+    notice.linkProcessoEletronico ||
+    notice.linkSistemaOrigem ||
+    `https://pncp.gov.br/app/editais/${notice.orgaoCnpj}/${notice.ano}/${notice.sequencial}`
+  );
+}

@@ -1,7 +1,7 @@
 import { createGoogle } from "@ai-sdk/google";
 import { embedMany, generateText, JSONParseError, NoObjectGeneratedError, NoOutputGeneratedError, Output, TypeValidationError, type EmbeddingModel, type LanguageModel } from "ai";
 import type { z } from "zod";
-import type { AiGateway, DocumentExtraction, DraftRequest, ExperienceExtraction, PageText } from "@/application/ports";
+import type { AiGateway, DocumentExtraction, DraftRequest, ExperienceExtraction, PageText } from "@/modules/shared/ports";
 import type { NoticeExtraction } from "@/domain/analysis/extraction";
 import type { VerificationIssue } from "@/domain/bid/bid";
 import { EMBEDDING_DIMENSIONS } from "@/domain/shared/vector";

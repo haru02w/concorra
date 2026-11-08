@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
-import type { TokenCipher } from "@/application/ports";
+import type { TokenCipher } from "@/modules/shared/ports";
 
 /** AES-256-GCM; output is base64url `iv.tag.ciphertext`. */
 export class AesGcmCipher implements TokenCipher {

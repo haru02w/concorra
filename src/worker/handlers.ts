@@ -1,36 +1,27 @@
-import type { Deps, JobName, JobPayloads } from "@/application/ports";
-import { runAnalysis } from "@/application/use-cases/analysis";
-import { buildBidPack, renderGeneratedDocument } from "@/application/use-cases/bids";
-import { processPaymentEvent } from "@/application/use-cases/billing";
-import { syncCalendar } from "@/application/use-cases/calendar";
-import { expiryWatch, validateUploadedDocument } from "@/application/use-cases/documents";
-import { extractExperience } from "@/application/use-cases/experiences";
-import { sendDigest, sendMatchNotifications } from "@/application/use-cases/notifications";
-import { embedProfile } from "@/application/use-cases/organizations";
-import { ingestNoticeFiles, syncContracts, syncOpenNotices, syncUpdatedNotices } from "@/application/use-cases/radar";
-import { matchNotice } from "@/application/use-cases/rules";
+import type { JobName, JobPayloads } from "@/modules/shared/ports";
+import type { Services } from "@/modules/services";
 
 export type Handlers = { [K in JobName]: (data: JobPayloads[K]) => Promise<unknown> };
 
-/** Maps every pg-boss queue (docs/SPEC.md §9) to its use case. */
-export function createHandlers(deps: Deps): Handlers {
+/** Maps every pg-boss queue (docs/SPEC.md §9) to its service method. */
+export function createHandlers(s: Services): Handlers {
   return {
-    "pncp.sync-open": () => syncOpenNotices(deps),
-    "pncp.sync-updates": () => syncUpdatedNotices(deps),
-    "pncp.sync-contracts": () => syncContracts(deps),
-    "rules.match": (data) => matchNotice(deps, data),
-    "notice.ingest-files": (data) => ingestNoticeFiles(deps, data),
-    "notify.send": (data) => sendMatchNotifications(deps, data),
-    "notify.digest": () => sendDigest(deps),
-    "analysis.run": (data) => runAnalysis(deps, data),
-    "bid.build-pack": (data) => buildBidPack(deps, data),
-    "bid.render-doc": (data) => renderGeneratedDocument(deps, data),
-    "docs.validate-upload": (data) => validateUploadedDocument(deps, data),
-    "docs.expiry-watch": () => expiryWatch(deps),
-    "calendar.sync": (data) => syncCalendar(deps, data),
-    "billing.webhook": (data) => processPaymentEvent(deps, data),
-    "experience.extract": (data) => extractExperience(deps, data),
-    "org.embed-profile": (data) => embedProfile(deps, data),
+    "pncp.sync-open": () => s.notices.syncOpenNotices(),
+    "pncp.sync-updates": () => s.notices.syncUpdatedNotices(),
+    "pncp.sync-contracts": () => s.notices.syncContracts(),
+    "rules.match": (data) => s.rules.matchNotice(data),
+    "notice.ingest-files": (data) => s.notices.ingestNoticeFiles(data),
+    "notify.send": (data) => s.notifications.sendMatchNotifications(data),
+    "notify.digest": () => s.notifications.sendDigest(),
+    "analysis.run": (data) => s.analysis.runAnalysis(data),
+    "bid.build-pack": (data) => s.bids.buildBidPack(data),
+    "bid.render-doc": (data) => s.bids.renderGeneratedDocument(data),
+    "docs.validate-upload": (data) => s.documents.validateUploadedDocument(data),
+    "docs.expiry-watch": () => s.documents.expiryWatch(),
+    "calendar.sync": (data) => s.calendar.syncCalendar(data),
+    "billing.webhook": (data) => s.billing.processPaymentEvent(data),
+    "experience.extract": (data) => s.experiences.extractExperience(data),
+    "org.embed-profile": (data) => s.organizations.embedProfile(data),
   };
 }
 

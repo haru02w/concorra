@@ -31,23 +31,29 @@ Hack Brasil 2026 · Track **Logística & Automação** · Full spec: [`docs/SPEC
 
 ## Architecture
 
-Clean architecture. Dependencies point inwards.
+Feature modules on top of a pure domain. Requests flow controller → service → repository.
 
 ```
 src/
   domain/          Pure business rules: plans, rule matching, citation checks, fit score,
                    document gaps/validity, bid lifecycle, templates, deadlines. No I/O.
-  application/
-    ports/         Interfaces for repositories and gateways, plus the pg-boss job contracts
-    use-cases/     Orchestration (onboarding, radar, rules, analysis, bids, vault, calendar,
-                   billing). Depends only on ports.
-    testing/       In-memory adapters used by the use-case tests
-  infrastructure/  Adapters: Prisma/pgvector, PNCP, BrasilAPI, Gemini (AI SDK), RustFS (S3),
+  modules/
+    <feature>/     auth, organizations, experiences, notices, rules, analysis, bids,
+                   documents, notifications, calendar, billing (+ mock):
+      *.controller.ts   REST/route handlers (src/app route.ts files re-export them)
+      *.actions.ts      Server actions used by the pages
+      *.service.ts      Service class with the feature's use cases (+ *.service.test.ts)
+      *.repository.ts   Repository interface + its Prisma implementation
+      *.schemas.ts      zod request schemas
+    shared/        Deps and ports (gateways, jobs), actor/quota/upload helpers,
+                   in-memory fakes for the service tests
+    services.ts    Wires every service on top of Deps
+  infrastructure/  Gateway adapters: Prisma client, PNCP, BrasilAPI, Gemini (AI SDK), RustFS (S3),
                    Resend, AbacatePay, WorkOS, Google/Microsoft calendars, pandoc, pg-boss,
-                   plus the composition root (container.ts)
-  worker/          pg-boss worker: queue handlers and cron schedules
-  web/             Next.js server helpers (session, actions) and shared components
-  app/             Next.js App Router (pages, server actions, route handlers)
+                   mock network, plus the composition root (container.ts)
+  worker/          pg-boss worker: queue handlers (→ services) and cron schedules
+  web/             Next.js server helpers (session, API/action plumbing) and shared components
+  app/             Next.js App Router: pages and thin route.ts re-exports
 ```
 
 There are two runtime services built from one codebase:

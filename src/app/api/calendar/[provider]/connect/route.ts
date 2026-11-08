@@ -1,17 +1,1 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { startCalendarConnect } from "@/application/use-cases/calendar";
-import { getDeps } from "@/web/server/container";
-import { getSession } from "@/web/server/session";
-
-export async function GET(request: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
-  const { provider } = await params;
-  if (provider !== "google" && provider !== "microsoft") return NextResponse.json({ error: "unknown provider" }, { status: 404 });
-  const session = await getSession();
-  if (!session?.actor) return NextResponse.redirect(new URL("/sign-in", request.url));
-  try {
-    return NextResponse.redirect(startCalendarConnect(getDeps(), session.actor, provider));
-  } catch (error) {
-    console.error("[calendar] connect", error);
-    return NextResponse.redirect(new URL("/settings?calendar=error", request.url));
-  }
-}
+export { connect as GET } from "@/modules/calendar/calendar.controller";

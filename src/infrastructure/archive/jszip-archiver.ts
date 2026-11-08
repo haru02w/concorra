@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import type { Archiver } from "@/application/ports";
+import type { Archiver } from "@/modules/shared/ports";
 
 export class JsZipArchiver implements Archiver {
   async zip(files: { name: string; bytes: Uint8Array }[]): Promise<Uint8Array> {

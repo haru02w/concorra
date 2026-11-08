@@ -1,5 +1,5 @@
 import type { WorkOS } from "@workos-inc/node";
-import type { IdentityProvider } from "@/application/ports";
+import type { IdentityProvider } from "@/modules/shared/ports";
 import type { Role } from "@/domain/organization/organization";
 
 export type WorkOSLike = {

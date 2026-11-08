@@ -1,14 +1,14 @@
 import "dotenv/config";
-import { JOB_NAMES } from "@/application/ports";
+import { JOB_NAMES } from "@/modules/shared/ports";
 import { createContainer } from "@/infrastructure/container";
 import { createHandlers, HEAVY_JOBS, SCHEDULES } from "./handlers";
 
 async function main() {
-  const { env, boss, jobs, storage, deps, db } = createContainer("worker");
+  const { env, boss, jobs, storage, services, db } = createContainer("worker");
   await storage.ensureBucket();
   await jobs.start();
 
-  const handlers = createHandlers(deps);
+  const handlers = createHandlers(services);
   for (const name of JOB_NAMES) {
     const localConcurrency = HEAVY_JOBS.includes(name) ? env.WORKER_CONCURRENCY : env.WORKER_CONCURRENCY * 2;
     await boss.work(name, { batchSize: 1, localConcurrency, pollingIntervalSeconds: 2 }, async ([job]) => {

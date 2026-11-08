@@ -1,12 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ExternalLinkIcon } from "lucide-react";
-import type { Analysis } from "@/application/ports";
-import { noticeLink, openNotice } from "@/application/use-cases/radar";
+import type { Analysis } from "@/modules/shared/ports";
 import type { Citation, Cited, NoticeExtraction } from "@/domain/analysis/extraction";
 import { DOCUMENT_KIND_LABELS } from "@/domain/documents/document";
-import type { NoticeFile } from "@/domain/notice/notice";
-import { NotFoundError } from "@/domain/shared/errors";
+import { noticeLink, type NoticeFile } from "@/domain/notice/notice";
 import { formatCnpj } from "@/domain/shared/cnpj";
 import { parsePncpDateTime } from "@/domain/shared/dates";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -17,7 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AutoRefresh } from "@/web/components/auto-refresh";
 import { formatDateTime, formatMoney } from "@/web/components/format";
 import { StatusBadge } from "@/web/components/status-badge";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
+import { orNotFound } from "@/web/server/page";
 import { requireActor } from "@/web/server/session";
 import { AnalyzeButton, DecisionForms } from "./forms";
 
@@ -28,16 +26,9 @@ const RUNNING = ["queued", "ingesting", "running"];
 export default async function NoticePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { actor } = await requireActor();
-  const deps = getDeps();
-  const view = await openNotice(deps, actor, id).catch((error) => {
-    if (error instanceof NotFoundError) notFound();
-    throw error;
-  });
-  const { notice, items, files } = view;
-  const [analysis, bid] = await Promise.all([
-    deps.analyses.findLatest(actor.organizationId, notice.id),
-    deps.bids.findByNotice(actor.organizationId, notice.id),
-  ]);
+  const services = getServices();
+  const { notice, items, files } = await orNotFound(services.notices.openNotice(actor, id));
+  const [analysis, bid] = await Promise.all([services.analysis.findLatestAnalysis(actor, notice.id), services.bids.findBidForNotice(actor, notice.id)]);
   const pncpUrl = `https://pncp.gov.br/app/editais/${notice.orgaoCnpj}/${notice.ano}/${notice.sequencial}`;
 
   return (

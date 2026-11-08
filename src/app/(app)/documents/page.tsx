@@ -11,17 +11,17 @@ import { AutoRefresh } from "@/web/components/auto-refresh";
 import { formatDate } from "@/web/components/format";
 import { StatusBadge } from "@/web/components/status-badge";
 import { SubmitButton } from "@/web/components/submit-button";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
 import { ConfirmSubmit } from "../bids/confirm-submit";
-import { remove, upload } from "./actions";
+import { remove, upload } from "@/modules/documents/documents.actions";
 
 export const metadata: Metadata = { title: "Documentos" };
 
 export default async function DocumentsPage({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
   const { kind } = await searchParams;
   const { actor } = await requireActor();
-  const docs = await getDeps().documents.listByOrg(actor.organizationId);
+  const docs = await getServices().documents.listDocuments(actor);
   const preselected = DOCUMENT_KINDS.includes(kind as DocumentKind) ? kind : "cnd_federal";
   const portals = Object.entries(CERTIDAO_PORTALS) as [DocumentKind, string][];
 

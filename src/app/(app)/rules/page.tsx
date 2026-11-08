@@ -5,7 +5,7 @@ import type { Rule } from "@/domain/rules/rule";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMoney } from "@/web/components/format";
-import { getDeps } from "@/web/server/container";
+import { getServices } from "@/web/server/container";
 import { requireActor } from "@/web/server/session";
 import { RuleActions } from "./rule-actions";
 import { RuleForm } from "./rule-form";
@@ -29,7 +29,7 @@ function summary(rule: Rule): string[] {
 export default async function RulesPage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
   const { edit } = await searchParams;
   const { actor, session } = await requireActor();
-  const rules = await getDeps().rules.listByOrg(actor.organizationId);
+  const rules = await getServices().rules.listRules(actor);
   const editing = edit ? (rules.find((r) => r.id === edit) ?? null) : null;
   const limit = PLANS[session.organization!.planId].limits.rules;
   const active = rules.filter((r) => r.active).length;

@@ -1,4 +1,4 @@
-import type { ContractItemUpsert, NoticeUpsert, Page, PncpFile, PncpGateway } from "@/application/ports";
+import type { ContractItemUpsert, NoticeUpsert, Page, PncpFile, PncpGateway } from "@/modules/shared/ports";
 import { compraRefFromControle, type CompraRef, type NoticeItem } from "@/domain/notice/notice";
 import { parsePncpDateTime } from "@/domain/shared/dates";
 

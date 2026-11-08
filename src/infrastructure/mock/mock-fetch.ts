@@ -4,7 +4,7 @@
  * deterministic, fictitious data in each service's wire format. Real adapters
  * run unchanged; only the network is fake. Unknown hosts throw.
  */
-import type { PdfTextExtractor } from "@/application/ports";
+import type { PdfTextExtractor } from "@/modules/shared/ports";
 import * as P from "../ai/prompts";
 import { mockClassify, mockDocument, mockDraft, mockEmbedding, mockExperience, mockExtraction, mockInstructions } from "./ai-mock";
 import type { MockOutbox } from "./outbox";
