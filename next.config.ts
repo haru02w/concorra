@@ -1,9 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  output: "standalone",
+  // Server-only packages loaded from node_modules at runtime.
+  serverExternalPackages: ["pg-boss", "pg", "@prisma/adapter-pg", "unpdf"],
+  experimental: {
+    // Document uploads are limited to 15 MB (domain); leave room for multipart overhead.
+    serverActions: { bodySizeLimit: "16mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {
