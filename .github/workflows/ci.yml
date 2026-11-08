@@ -18,8 +18,20 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U concorra" --health-interval 5s --health-timeout 5s --health-retries 10
+      rustfs:
+        image: rustfs/rustfs:1.0.4
+        env:
+          RUSTFS_VOLUMES: /data
+          RUSTFS_ADDRESS: 0.0.0.0:9000
+          RUSTFS_ACCESS_KEY: concorra
+          RUSTFS_SECRET_KEY: concorra-secret
+        ports: ["9000:9000"]
     env:
       DATABASE_URL: postgresql://concorra:concorra@localhost:5432/concorra
+      APP_SECRET: ci-secret-ci-secret-ci-secret-ci-secret-ci
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: concorra
+      S3_SECRET_KEY: concorra-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,4 +46,5 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm test:integration
+      - run: pnpm test:e2e
       - run: pnpm build

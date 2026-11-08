@@ -35,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="ml-auto flex items-center gap-2">
             <OrgSwitcher
               current={org.id}
-              organizations={session.organizations.map((o) => ({ id: o.organization.id, workosOrgId: o.organization.workosOrgId, name: o.organization.razaoSocial }))}
+              organizations={session.organizations.map((o) => ({ id: o.organization.id, name: o.organization.razaoSocial }))}
               disabled={session.demo}
             />
             <Button variant="ghost" size="icon" render={<Link href="/notifications" aria-label="Notificações" />}>

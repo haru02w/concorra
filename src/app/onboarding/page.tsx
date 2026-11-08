@@ -27,7 +27,7 @@ export default async function OnboardingPage() {
           <CardContent className="space-y-2">
             {session.organizations.map(({ organization, role }) => (
               <form key={organization.id} action={switchAction} className="flex items-center justify-between gap-2 rounded-md border p-2">
-                <input type="hidden" name="workosOrgId" value={organization.workosOrgId} />
+                <input type="hidden" name="organizationId" value={organization.id} />
                 <div className="text-sm">
                   <div className="font-medium">{organization.razaoSocial}</div>
                   <div className="text-muted-foreground">

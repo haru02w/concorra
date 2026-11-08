@@ -13,7 +13,7 @@ export function OrgSwitcher({
   disabled,
 }: {
   current: string;
-  organizations: { id: string; workosOrgId: string; name: string }[];
+  organizations: { id: string; name: string }[];
   disabled?: boolean;
 }) {
   const [pending, start] = useTransition();
@@ -27,7 +27,7 @@ export function OrgSwitcher({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {organizations.map((o) => (
-          <DropdownMenuItem key={o.id} disabled={o.id === current} onClick={() => start(() => switchOrganization(o.workosOrgId))}>
+          <DropdownMenuItem key={o.id} disabled={o.id === current} onClick={() => start(() => switchOrganization(o.id))}>
             {o.name}
           </DropdownMenuItem>
         ))}

@@ -1,7 +1,7 @@
 "use server";
 
-import { switchToOrganization } from "@workos-inc/authkit-nextjs";
+import { switchOrganization as switchTo } from "@/web/server/session";
 
-export async function switchOrganization(workosOrgId: string) {
-  await switchToOrganization(workosOrgId, { returnTo: "/radar" });
+export async function switchOrganization(organizationId: string) {
+  await switchTo(organizationId, "/radar");
 }

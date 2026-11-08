@@ -74,13 +74,40 @@ pnpm worker:dev                    # jobs + schedules (separate terminal)
 
 With `DEMO_MODE=true`, open <http://localhost:3000/demo> to sign in as the seeded fictitious company. WorkOS is not needed for this. AI features need `GEMINI_API_KEY`. Any integration without credentials fails with a clear "not configured" error.
 
+### Mock mode (no API keys)
+
+`MOCK_EXTERNAL=true` keeps every adapter real but swaps the network for deterministic fakes (`src/infrastructure/mock`):
+
+- **PNCP:** 24 fictitious notices with items, edital PDFs (some "scanned", which exercises OCR) and contracts.
+- **Gemini:** the mock reads the real prompt and returns schema-valid answers whose citations are verbatim excerpts, so citation checks, gap lists and scores run for real. Embeddings are hashed into 768 dims.
+- **BrasilAPI, AbacatePay, Google and Microsoft calendars:** answer in each service's own wire format.
+- **WorkOS and Resend:** calls are recorded in an outbox instead of being sent.
+
+The mock-only endpoints are:
+
+| Endpoint | Purpose |
+|---|---|
+| `/api/mock/login?email=…` | Passwordless sign-in, replacing AuthKit |
+| `POST /api/mock/jobs` `{ "name": "pncp.sync-open" }` | Run a job now instead of waiting for cron |
+| `/api/mock/outbox?kind=mail\|workos\|payments\|calendar` | List what the mocked services "sent" |
+| `/api/mock/abacatepay/checkout` | Fake hosted checkout; "paying" sends a signed webhook |
+
+Mock mode refuses to start in production.
+
+### REST API
+
+JSON endpoints under `/api/v1` cover every use case and use the same session cookie as the web app. See [`docs/API.md`](docs/API.md).
+
 ### Tests
 
 ```bash
-pnpm test               # unit tests: domain, use cases (in-memory adapters), adapters (mocked HTTP)
-pnpm test:integration   # repositories + an end-to-end flow on Postgres (needs docker compose up)
+pnpm test               # unit: domain, use cases (in-memory adapters), adapters + mock network
+pnpm test:integration   # repositories + a use-case flow on Postgres (needs docker compose up)
+pnpm test:e2e           # headless: boots web + worker (MOCK_EXTERNAL) on a <db>_e2e database and drives the REST API
 pnpm typecheck && pnpm lint
 ```
+
+`pnpm test:e2e` runs the full journey over HTTP: onboarding, rules, PNCP sync, matches and email, AI analysis with verified citations, the upgrade through the checkout webhook, vault validation, calendar OAuth, the bid pack, pricing and approval, downloads and ZIP export, and org isolation. Server logs go to `.next-e2e/logs/`. Set `E2E_BASE_URL` to point it at a server that is already running.
 
 ### Environment
 
