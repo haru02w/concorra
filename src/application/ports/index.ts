@@ -4,6 +4,7 @@ import type * as R from "./repositories";
 export type * from "./gateways";
 export type * from "./repositories";
 export type * from "./jobs";
+export { JOB_NAMES } from "./jobs";
 
 export interface AppConfig {
   appUrl: string;
