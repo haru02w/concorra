@@ -2,7 +2,7 @@ import { applyCitationChecks } from "@/domain/analysis/citations";
 import type { NoticeExtraction } from "@/domain/analysis/extraction";
 import { computeGaps, documentReadiness } from "@/domain/analysis/gaps";
 import { computeFitScore, recommend } from "@/domain/analysis/score";
-import { daysBetween } from "@/domain/shared/dates";
+import { daysBetween, usagePeriod } from "@/domain/shared/dates";
 import { NotFoundError } from "@/domain/shared/errors";
 import type { Analysis, Deps, PageText } from "../ports";
 import { consumeQuota, loadOrg, releaseQuota, type Actor } from "./context";
@@ -103,15 +103,18 @@ export async function runAnalysis(deps: RunDeps, input: { analysisId: string }):
   const analysis = await deps.analyses.findById(input.analysisId);
   if (!analysis) throw new NotFoundError("Analysis", input.analysisId);
   if (analysis.status === "done") return analysis;
+  // Job retries run again after a failure; the quota is released once and re-charged on success.
+  const retrying = analysis.status === "failed";
   await deps.analyses.update(analysis.id, { status: "running", error: null });
   try {
     const result = await analyze(deps, analysis);
+    if (retrying) await deps.usage.tryConsume(analysis.organizationId, "analyses", usagePeriod(deps.clock.now()), null);
     await afterAnalysis(deps, result);
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await deps.analyses.update(analysis.id, { status: "failed", error: message.slice(0, 2000) });
-    await releaseQuota(deps, analysis.organizationId, "analyses");
+    if (!retrying) await releaseQuota(deps, analysis.organizationId, "analyses");
     throw error;
   }
 }

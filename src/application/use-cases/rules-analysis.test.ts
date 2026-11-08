@@ -124,6 +124,22 @@ describe("analysis", () => {
     await expect(runAnalysis(deps, { analysisId: analysis.id })).rejects.toThrow("model down");
     expect((await deps.analyses.findById(analysis.id))?.status).toBe("failed");
     expect(await deps.usage.get(actor.organizationId, "analyses", "2026-11")).toBe(0);
+    // job retry fails again: quota is not released twice
+    await expect(runAnalysis(deps, { analysisId: analysis.id })).rejects.toThrow("model down");
+    expect(await deps.usage.get(actor.organizationId, "analyses", "2026-11")).toBe(0);
+  });
+
+  it("re-charges the quota when a retry succeeds", async () => {
+    const { deps, actor, notice } = await setup();
+    const original = deps.ai.extractNotice.bind(deps.ai);
+    deps.ai.extractNotice = async () => {
+      throw new Error("timeout");
+    };
+    const analysis = await requestAnalysis(deps, actor.organizationId, notice.id);
+    await expect(runAnalysis(deps, { analysisId: analysis.id })).rejects.toThrow();
+    deps.ai.extractNotice = original;
+    await runAnalysis(deps, { analysisId: analysis.id });
+    expect(await deps.usage.get(actor.organizationId, "analyses", "2026-11")).toBe(1);
   });
 
   it("analyzes PNCP metadata when the notice has no files", async () => {
