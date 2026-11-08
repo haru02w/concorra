@@ -15,7 +15,7 @@ const schema = z.object({
   /** Secret for token encryption and demo sessions (≥ 32 chars). */
   APP_SECRET: z.string().min(32),
   DEMO_MODE: bool,
-  DEMO_ORG_CNPJ: z.string().default("11222333000181"),
+  DEMO_ORG_CNPJ: z.string().default("99000000000159"),
 
   S3_ENDPOINT: optional,
   S3_PUBLIC_ENDPOINT: optional,

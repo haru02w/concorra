@@ -127,7 +127,7 @@ For a Bid, generate:
 - **Price references (simple):** for each item, similar past PNCP contracts/items with their prices (pgvector similarity), labeled as reference only — never auto-filled into the proposta.
 - **Verification pass:** AI + deterministic checks that each generated document references the correct edital number, órgão, CNPJ, dates and items.
 - **Submission instructions:** step-by-step guide for the specific portal (from `linkSistemaOrigem` / `linkProcessoEletronico`), including what to upload where and in which order.
-- **Formats:** templates are **Markdown** with placeholders → rendered by pandoc to **DOCX** and to **PDF** (LaTeX engine) from the same source. Where the renderer runs: see §15.
+- **Formats:** templates are **Markdown** with placeholders → rendered by pandoc to **DOCX** and to **PDF** (LaTeX engine) from the same source, rendered in the `worker` (pandoc + LaTeX).
 - Export: individual files (DOCX + PDF) and a ZIP bundle.
 - Every generated document requires explicit user review/approval before it's marked ready.
 
@@ -151,7 +151,7 @@ For a Bid, generate:
 | Bid packs / month | 0 | 10 | 50 |
 
 - Payments via AbacatePay (Pix/card); sandbox only for the hackathon demo.
-- **Recurring:** use AbacatePay native subscriptions if available; otherwise a pg-boss schedule issues a one-time charge each cycle and the payment webhook extends the period.
+- **Recurring:** AbacatePay v2 native subscriptions (`/subscriptions/create`, monthly products); `subscription.*` webhooks activate, renew, flag failed payments and cancel.
 - Limits enforced per organization via usage counters.
 - Webhooks signature-validated and processed idempotently.
 
@@ -236,29 +236,28 @@ Notes:
 
 ## 9. Background jobs (pg-boss)
 
-Each row is a queue handled by `worker`. *Schedule* = pg-boss cron; *events* = jobs enqueued by `web` or by other jobs.
+Each row is a queue handled by `worker` (pg-boss names allow only letters, digits, `-`, `_`, `.`). Also `experience.extract` and `org.embed-profile`. *Schedule* = pg-boss cron; *events* = jobs enqueued by `web` or by other jobs.
 
 | Queue | Trigger | Does |
 |---|---|---|
-| `pncp/sync-open` | schedule | Page through open notices, upsert metadata + items, embed, emit `notice.upserted` |
-| `pncp/sync-updates` | schedule | Pull updated notices since last cursor, emit `notice.updated` |
-| `pncp/sync-contracts` | schedule | Ingest contracts/items for price references, embed |
-| `rules/match` | `notice.upserted`, `notice.updated` | Evaluate all rules; create matches; emit `match.created` |
-| `notice/ingest-files` | `match.created`, user opens notice | Download files, extract text per page (OCR if scanned), chunk, embed |
-| `notify/send` | `match.created`, schedule (digest) | Email + in-app |
-| `analysis/run` | `notice.files-ingested` (plan-limited) / user | Extraction → citation validation → gap list → score |
-| `bid/build-pack` | `bid.created` | Validate docs, price references, draft + render documents, verify, instructions |
-| `docs/validate-upload` | `document.uploaded` | AI extraction + deterministic checks |
-| `docs/expiry-watch` | schedule | Expiration alerts |
-| `calendar/sync` | `bid.*`, `document.*` | Upsert/delete calendar events |
-| `billing/renew` | schedule (only if no native subscriptions) | Issue next-cycle charge |
-| `billing/webhook` | AbacatePay webhook | Update subscription, limits |
+| `pncp.sync-open` | schedule | Page through open notices, upsert metadata + items, embed, emit `notice.upserted` |
+| `pncp.sync-updates` | schedule | Pull updated notices since last cursor, emit `notice.updated` |
+| `pncp.sync-contracts` | schedule | Ingest contracts/items for price references, embed |
+| `rules.match` | `notice.upserted`, `notice.updated` | Evaluate all rules; create matches; emit `match.created` |
+| `notice.ingest-files` | `match.created`, user opens notice | Download files, extract text per page (OCR if scanned), chunk, embed |
+| `notify.send` / `notify.digest` | `match.created`, schedule (digest) | Email + in-app |
+| `analysis.run` | `notice.files-ingested` (plan-limited) / user | Extraction → citation validation → gap list → score |
+| `bid.build-pack` / `bid.render-doc` | `bid.created` | Validate docs, price references, draft + render documents, verify, instructions |
+| `docs.validate-upload` | `document.uploaded` | AI extraction + deterministic checks |
+| `docs.expiry-watch` | schedule | Expiration alerts |
+| `calendar.sync` | `bid.*`, `document.*` | Upsert/delete calendar events |
+| `billing.webhook` | AbacatePay webhook | Update subscription, limits |
 
 Progress for user-triggered jobs is shown in the UI (polling or streaming).
 
 ## 10. Data model (Prisma, outline)
 
-`vector(N)` dimension: see §15.
+`vector(768)` (Gemini `outputDimensionality: 768`, re-normalized; HNSW cosine indexes).
 
 ```
 Organization(id, workosOrgId, cnpj, razaoSocial, porte, cnaes[], ufs[], municipios[], valueMin, valueMax, expertiseText, ...)
@@ -272,6 +271,7 @@ Notice(id, numeroControlePNCP UNIQUE, orgaoCnpj, ano, sequencial, objeto, modali
        raw jsonb, updatedAtPncp, filesIngestedAt, embedding vector)
 NoticeItem(id, noticeId, numeroItem, descricao, quantidade, unidade, valorUnitario, ..., embedding vector)
 NoticeFile(id, noticeId, sequencialDocumento, tipo, titulo, url, storageKey, pageCount, ocr bool)
+NoticePage(id, noticeFileId, page, text)   -- full page text for citation checks
 NoticeChunk(id, noticeFileId, page, text, embedding vector)
 
 ContractItem(id, numeroControlePNCP, orgaoCnpj, descricao, unidade, quantidade, valorUnitario, dataAssinatura, uf, embedding vector)
@@ -293,8 +293,8 @@ CalendarEvent(id, connectionId, refType, refId, externalId)
 
 Notification(id, organizationId, userId?, type, payload jsonb, readAt)
 
-Plan(id, name, priceCents, limits jsonb)
-Subscription(id, organizationId, planId, status, abacatepayRef, currentPeriodEnd)
+Plans: code constants (src/domain/billing/plans.ts), not a table
+Subscription(id, organizationId, planId, pendingPlanId, status, customerRef, checkoutRef, subscriptionRef, currentPeriodEnd)
 UsageCounter(id, organizationId, metric, period, count)
 WebhookEvent(id, provider, externalId UNIQUE, payload, processedAt)
 ```
@@ -326,7 +326,7 @@ WebhookEvent(id, provider, externalId UNIQUE, payload, processedAt)
 - **No backups in MVP:** data loss on disk failure is accepted for the hackathon; add `pg_dump` + object storage backup in a later phase.
 - **PNCP availability/rate limits:** no published SLA; mitigate with backoff, cursors and idempotent upserts.
 - **BrasilAPI:** no SLA; profile remains manually editable.
-- **AbacatePay recurring:** native subscription support not confirmed; fallback defined in F10.
+- **AbacatePay recurring:** native v2 subscriptions confirmed (2026-11-08); refunds of subscriptions are not supported by the API.
 
 ## 14. Hackathon deliverables (due 2026-11-30 23:59 BRT)
 
@@ -337,6 +337,6 @@ WebhookEvent(id, provider, externalId UNIQUE, payload, processedAt)
 
 ## 15. Open questions
 
-1. **Embedding dimension:** Gemini embeddings default to 3072 dims; pgvector HNSW on `vector` supports ≤ 2000 (`halfvec` ≤ 4000). Decide later (e.g., 1536 / 768 via `outputDimensionality`, or 3072 + `halfvec`).
-2. **AbacatePay native subscriptions:** verify in docs/dashboard before implementing F10.
+1. ~~Embedding dimension~~ — decided: 768 (`gemini-embedding-001`, `outputDimensionality: 768`).
+2. ~~AbacatePay native subscriptions~~ — confirmed in API v2; implemented without the renewal job.
 3. **F6.2 certidão fetching approach** (Later phase).

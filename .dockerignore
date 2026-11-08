@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.devenv*
+.direnv
+.env
+.env.*
+!.env.example
+coverage
+src/infrastructure/db/generated
