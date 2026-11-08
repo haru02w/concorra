@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
   languages.javascript = {
@@ -6,6 +6,9 @@
     package = pkgs.nodejs_24;
     pnpm.enable = true;
   };
+
+  # Keep the pnpm store on the same filesystem as the repo (hard links).
+  env.npm_config_store_dir = "${config.devenv.root}/.devenv/pnpm-store";
 
   packages = with pkgs; [
     git

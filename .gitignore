@@ -20,3 +20,11 @@ out/
 build/
 *.tsbuildinfo
 next-env.d.ts
+
+# testing
+/coverage
+
+# misc
+.DS_Store
+*.pem
+.pnpm-debug.log*
