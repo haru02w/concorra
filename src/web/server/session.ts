@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { withAuth } from "@workos-inc/authkit-nextjs";
 import { resolveSession, type ResolvedSession } from "@/application/use-cases/auth";
@@ -36,6 +37,7 @@ async function demoSession(value: string): Promise<ResolvedSession | null> {
 
 /** Current session: demo cookie (DEMO_MODE only) or WorkOS AuthKit. */
 export const getSession = cache(async (): Promise<(ResolvedSession & { demo: boolean }) | null> => {
+  await connection(); // per-request: never prerender at build time
   const { env, deps } = getContainer();
   const demo = (await cookies()).get(DEMO_COOKIE)?.value;
   if (env.DEMO_MODE && demo) {
