@@ -38,7 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               organizations={session.organizations.map((o) => ({ id: o.organization.id, name: o.organization.razaoSocial }))}
               disabled={session.demo}
             />
-            <Button variant="ghost" size="icon" render={<Link href="/notifications" aria-label="Notificações" />}>
+            <Button variant="ghost" size="icon" nativeButton={false} render={<Link href="/notifications" aria-label="Notificações" />}>
               <span className="relative">
                 <BellIcon />
                 {unread > 0 && (
