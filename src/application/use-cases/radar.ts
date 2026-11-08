@@ -1,7 +1,7 @@
 import { MODALIDADES, noticeSearchText, type Notice } from "@/domain/notice/notice";
 import { addDays, toPncpDate } from "@/domain/shared/dates";
 import { NotFoundError } from "@/domain/shared/errors";
-import { chunkText } from "@/domain/shared/text";
+import { chunkText, maskPersonalData } from "@/domain/shared/text";
 import { l2normalize } from "@/domain/shared/vector";
 import type { Deps, NoticeSearch, NoticeUpsert } from "../ports";
 import type { Actor } from "./context";
@@ -107,7 +107,7 @@ const MAX_FILE_BYTES = 40 * 1024 * 1024;
  * chunks and embeds. Continues to the analysis when one is waiting.
  */
 export async function ingestNoticeFiles(
-  deps: Pick<Deps, "notices" | "noticeFiles" | "pncp" | "storage" | "pdfText" | "ai" | "jobs" | "clock" | "analyses">,
+  deps: Pick<Deps, "notices" | "noticeFiles" | "pncp" | "storage" | "pdfText" | "ai" | "jobs" | "clock" | "analyses" | "config">,
   input: { noticeId: string; analysisId?: string },
 ): Promise<{ files: number }> {
   const notice = await deps.notices.findById(input.noticeId);
@@ -132,6 +132,8 @@ export async function ingestNoticeFiles(
         pages = await deps.ai.ocr({ bytes: download.bytes, mediaType: PDF });
         ocr = true;
       }
+      // Demo mode (Hack Brasil 6.9): never show real people's names/CPFs from editais.
+      if (deps.config.demoMode) pages = pages.map(maskPersonalData);
       await deps.noticeFiles.savePages(file.id, pages);
       const chunks = pages.flatMap((text, i) => chunkText(text).map((chunk) => ({ page: i + 1, text: chunk })));
       if (chunks.length) {

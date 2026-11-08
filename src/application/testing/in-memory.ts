@@ -477,7 +477,7 @@ export function makeTestDeps() {
   const notices = new InMemoryNotices(organizations);
   const rules = new InMemoryRules();
   const deps = {
-    config: { appUrl: "https://app.test", demoMode: false, emailFrom: "Concorra <no-reply@test>" },
+    config: { appUrl: "https://app.test", demoMode: false, emailFrom: "Concorra <no-reply@test>" } as P.Deps["config"],
     clock,
     organizations,
     users,

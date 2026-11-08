@@ -94,6 +94,20 @@ describe("ingestNoticeFiles", () => {
   });
 });
 
+describe("demo masking", () => {
+  it("masks CPFs and agent names in edital pages when demo mode is on", async () => {
+    const { deps, notice } = await setup();
+    deps.config.demoMode = true;
+    deps.pncp.files = [{ sequencialDocumento: 1, titulo: "Edital", tipo: null, url: "https://pncp/1" }];
+    deps.pdfText.pages = ["Pregoeira: Ana Maria Souza, CPF 123.456.789-09, conduzirá a sessão pública do pregão."];
+    await ingestNoticeFiles(deps, { noticeId: notice.id });
+    const [page] = [...(await deps.noticeFiles.loadPages(notice.id)).values()][0];
+    expect(page).toContain("[nome omitido]");
+    expect(page).not.toContain("Ana Maria");
+    expect(page).not.toContain("123.456.789-09");
+  });
+});
+
 describe("openNotice", () => {
   it("queues lazy ingestion on first open", async () => {
     const { deps, actor, notice } = await setup();
