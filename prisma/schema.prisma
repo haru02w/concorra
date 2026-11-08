@@ -1,0 +1,440 @@
+// Concorra data model (docs/SPEC.md §10).
+// pgvector columns are `Unsupported("vector(768)")` and accessed with raw SQL.
+// HNSW indexes live in the init migration (Prisma cannot model them): when
+// `prisma migrate dev` generates `DROP INDEX "*_embedding_hnsw"`, delete those lines.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/infrastructure/db/generated"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id               String                 @id @default(cuid())
+  workosOrgId      String                 @unique
+  cnpj             String                 @unique
+  razaoSocial      String
+  nomeFantasia     String?
+  porte            String                 @default("DEMAIS")
+  cnaePrincipal    String?
+  cnaesSecundarios String[]
+  endereco         String?
+  municipio        String?
+  uf               String?
+  representante    String?
+  ufs              String[]
+  municipios       String[]
+  valueMin         Float?
+  valueMax         Float?
+  expertiseText    String                 @default("")
+  planId           String                 @default("free")
+  profileEmbedding Unsupported("vector(768)")?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  memberships   Membership[]
+  experiences   Experience[]
+  rules         Rule[]
+  matches       Match[]
+  analyses      Analysis[]
+  bids          Bid[]
+  documents     Document[]
+  files         File[]
+  notifications Notification[]
+  subscription  Subscription?
+  usage         UsageCounter[]
+  calendars     CalendarConnection[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  workosUserId String   @unique
+  email        String
+  name         String?
+  createdAt    DateTime @default(now())
+
+  memberships Membership[]
+  calendars   CalendarConnection[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model Experience {
+  id             String                      @id @default(cuid())
+  organizationId String
+  fileId         String?
+  issuer         String?
+  object         String
+  quantities     String?
+  periodStart    DateTime?
+  periodEnd      DateTime?
+  embedding      Unsupported("vector(768)")?
+  createdAt      DateTime                    @default(now())
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Notice {
+  id                     String                      @id @default(cuid())
+  numeroControlePNCP     String                      @unique
+  orgaoCnpj              String
+  orgaoNome              String
+  ano                    Int
+  sequencial             Int
+  numeroCompra           String?
+  processo               String?
+  objeto                 String
+  informacaoComplementar String?
+  modalidadeId           Int
+  modalidadeNome         String
+  modoDisputa            String?
+  situacao               String?
+  valorEstimado          Float?
+  uf                     String?
+  municipioIbge          String?
+  municipioNome          String?
+  unidadeNome            String?
+  dataPublicacao         DateTime?
+  dataAbertura           DateTime?
+  dataEncerramento       DateTime?
+  linkSistemaOrigem      String?
+  linkProcessoEletronico String?
+  updatedAtPncp          DateTime?
+  filesIngestedAt        DateTime?
+  raw                    Json
+  embedding              Unsupported("vector(768)")?
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+
+  items    NoticeItem[]
+  files    NoticeFile[]
+  matches  Match[]
+  analyses Analysis[]
+  bids     Bid[]
+
+  @@index([dataEncerramento])
+  @@index([uf])
+  @@index([modalidadeId])
+}
+
+model NoticeItem {
+  id            String                      @id @default(cuid())
+  noticeId      String
+  numeroItem    Int
+  descricao     String
+  quantidade    Float?
+  unidade       String?
+  valorUnitario Float?
+  valorTotal    Float?
+  embedding     Unsupported("vector(768)")?
+  notice        Notice                      @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  @@unique([noticeId, numeroItem])
+}
+
+model NoticeFile {
+  id                  String  @id @default(cuid())
+  noticeId            String
+  sequencialDocumento Int
+  tipo                String?
+  titulo              String
+  url                 String
+  storageKey          String?
+  pageCount           Int?
+  ocr                 Boolean @default(false)
+  notice              Notice  @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  pages  NoticePage[]
+  chunks NoticeChunk[]
+
+  @@unique([noticeId, sequencialDocumento])
+}
+
+model NoticePage {
+  id           String     @id @default(cuid())
+  noticeFileId String
+  page         Int
+  text         String
+  file         NoticeFile @relation(fields: [noticeFileId], references: [id], onDelete: Cascade)
+
+  @@unique([noticeFileId, page])
+}
+
+model NoticeChunk {
+  id           String                      @id @default(cuid())
+  noticeFileId String
+  page         Int
+  text         String
+  embedding    Unsupported("vector(768)")?
+  file         NoticeFile                  @relation(fields: [noticeFileId], references: [id], onDelete: Cascade)
+
+  @@index([noticeFileId])
+}
+
+model ContractItem {
+  id                 String                      @id @default(cuid())
+  numeroControlePNCP String
+  numeroItem         Int
+  orgaoCnpj          String
+  orgaoNome          String?
+  descricao          String
+  unidade            String?
+  quantidade         Float?
+  valorUnitario      Float
+  dataAssinatura     DateTime?
+  uf                 String?
+  embedding          Unsupported("vector(768)")?
+  createdAt          DateTime                    @default(now())
+
+  @@unique([numeroControlePNCP, numeroItem])
+}
+
+model Rule {
+  id                String       @id @default(cuid())
+  organizationId    String
+  name              String
+  filters           Json
+  semanticThreshold Float?
+  minScore          Int?
+  channels          String[]
+  frequency         String
+  active            Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  matches Match[]
+
+  @@index([organizationId])
+  @@index([active])
+}
+
+model Match {
+  id             String       @id @default(cuid())
+  ruleId         String
+  noticeId       String
+  organizationId String
+  similarity     Float?
+  status         String
+  frequency      String
+  channels       String[]
+  minScore       Int?
+  createdAt      DateTime     @default(now())
+  notifiedAt     DateTime?
+  rule           Rule         @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  notice         Notice       @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([ruleId, noticeId])
+  @@index([organizationId, createdAt])
+  @@index([status, frequency])
+}
+
+model Analysis {
+  id                    String       @id @default(cuid())
+  organizationId        String
+  noticeId              String
+  status                String
+  extraction            Json?
+  citationReport        Json?
+  score                 Int?
+  scoreFactors          Json?
+  gaps                  Json?
+  recommendation        String?
+  recommendationReasons Json?
+  cnaeCompatible        Boolean?
+  model                 String?
+  error                 String?
+  noticeVersion         String?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  notice                Notice       @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, noticeId, createdAt])
+}
+
+model Bid {
+  id              String       @id @default(cuid())
+  organizationId  String
+  noticeId        String
+  analysisId      String?
+  status          String
+  skipReason      String?
+  packStatus      String       @default("idle")
+  packSteps       String[]
+  packError       String?
+  proposalLines   Json         @default("[]")
+  priceReferences Json         @default("{}")
+  checklist       Json         @default("[]")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  notice          Notice       @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  documents GeneratedDocument[]
+
+  @@unique([organizationId, noticeId])
+}
+
+model GeneratedDocument {
+  id           String   @id @default(cuid())
+  bidId        String
+  key          String
+  kind         String
+  title        String
+  markdown     String
+  aiSlots      Json     @default("{}")
+  status       String
+  verification Json     @default("[]")
+  docxFileId   String?
+  pdfFileId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  bid          Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
+
+  @@unique([bidId, key])
+}
+
+model Document {
+  id               String       @id @default(cuid())
+  organizationId   String
+  kind             String
+  source           String       @default("uploaded")
+  fileId           String
+  issuer           String?
+  cnpj             String?
+  issuedAt         DateTime?
+  validUntil       DateTime?
+  extracted        Json?
+  status           String
+  checks           Json         @default("[]")
+  expiryNotifiedAt DateTime?
+  createdAt        DateTime     @default(now())
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  file             File         @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([validUntil])
+}
+
+model File {
+  id             String        @id @default(cuid())
+  organizationId String?
+  storageKey     String        @unique
+  name           String
+  mime           String
+  size           Int
+  sha256         String
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  documents Document[]
+}
+
+model CalendarConnection {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  provider       String
+  accessToken    String
+  refreshToken   String?
+  expiresAt      DateTime?
+  calendarId     String
+  email          String?
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  events CalendarEvent[]
+
+  @@unique([userId, organizationId, provider])
+}
+
+model CalendarEvent {
+  id           String             @id @default(cuid())
+  connectionId String
+  key          String
+  refType      String
+  refId        String
+  externalId   String
+  connection   CalendarConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, key])
+  @@index([refType, refId])
+}
+
+model Notification {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String?
+  type           String
+  title          String
+  body           String
+  link           String?
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId, createdAt])
+}
+
+model Subscription {
+  id               String       @id @default(cuid())
+  organizationId   String       @unique
+  planId           String
+  pendingPlanId    String?
+  status           String
+  customerRef      String?
+  checkoutRef      String?
+  subscriptionRef  String?
+  currentPeriodEnd DateTime?
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([checkoutRef])
+  @@index([subscriptionRef])
+}
+
+model UsageCounter {
+  id             String       @id @default(cuid())
+  organizationId String
+  metric         String
+  period         String
+  count          Int          @default(0)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, metric, period])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  externalId  String
+  payload     Json
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, externalId])
+}
+
+model KeyValue {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

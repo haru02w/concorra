@@ -348,12 +348,13 @@ export function fakeEmbedding(text: string, dims = 32): number[] {
 
 export class FakeAi implements P.AiGateway {
   modelName = "fake-model";
+  dims = 32;
   calls: Record<string, unknown[]> = {};
   extraction: NoticeExtraction = makeExtraction();
   retryExtraction: NoticeExtraction | null = null;
   documentExtraction: P.DocumentExtraction = { kind: "cnd_federal", issuer: "Receita Federal", cnpj: "11222333000181", issuedAt: "2026-10-01", validUntil: "2027-03-30" };
   private record(name: string, input: unknown) { (this.calls[name] ??= []).push(input); }
-  async embed(texts: string[], purpose: "document" | "query") { this.record("embed", { texts, purpose }); return texts.map((t) => fakeEmbedding(t)); }
+  async embed(texts: string[], purpose: "document" | "query") { this.record("embed", { texts, purpose }); return texts.map((t) => fakeEmbedding(t, this.dims)); }
   async extractNotice(input: { pages: P.PageText[]; retryPaths?: string[]; previous?: NoticeExtraction }) {
     this.record("extractNotice", input);
     return structuredClone(input.retryPaths && this.retryExtraction ? this.retryExtraction : this.extraction);

@@ -10,6 +10,12 @@
   # Keep the pnpm store on the same filesystem as the repo (hard links).
   env.npm_config_store_dir = "${config.devenv.root}/.devenv/pnpm-store";
 
+  # Prisma has no prebuilt engines for NixOS; use the nixpkgs schema engine.
+  env.PRISMA_SCHEMA_ENGINE_BINARY = "${pkgs.prisma-engines_7}/bin/schema-engine";
+
+  # Load .env into the shell.
+  dotenv.enable = true;
+
   packages = with pkgs; [
     git
     openssl # Prisma engines

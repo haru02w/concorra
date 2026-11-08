@@ -28,3 +28,6 @@ next-env.d.ts
 .DS_Store
 *.pem
 .pnpm-debug.log*
+
+# Prisma generated client
+src/infrastructure/db/generated/
