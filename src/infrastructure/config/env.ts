@@ -16,6 +16,8 @@ const schema = z.object({
   APP_SECRET: z.string().min(32),
   DEMO_MODE: bool,
   DEMO_ORG_CNPJ: z.string().default("99000000000159"),
+  /** Replace every external API (PNCP, BrasilAPI, Gemini, WorkOS, Resend, AbacatePay, calendars) with deterministic mocks. */
+  MOCK_EXTERNAL: bool,
 
   S3_ENDPOINT: optional,
   S3_PUBLIC_ENDPOINT: optional,
@@ -71,10 +73,19 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid environment: ${issues}`);
   }
+  if (parsed.data.MOCK_EXTERNAL && source.NODE_ENV === "production" && source.MOCK_ALLOW_PRODUCTION !== "true") {
+    throw new Error("MOCK_EXTERNAL must not run in production (it enables passwordless mock login)");
+  }
   if (source === process.env) cached = parsed.data;
   return parsed.data;
 }
 
+/** Real WorkOS AuthKit sessions (disabled in mock mode, which uses local sessions). */
 export function workosConfigured(env: Env): boolean {
-  return !!(env.WORKOS_API_KEY && env.WORKOS_CLIENT_ID);
+  return !env.MOCK_EXTERNAL && !!(env.WORKOS_API_KEY && env.WORKOS_CLIENT_ID);
+}
+
+/** Cookie-based sessions: the demo login and the mock login. */
+export function localSessionsEnabled(env: Env): boolean {
+  return env.DEMO_MODE || env.MOCK_EXTERNAL;
 }

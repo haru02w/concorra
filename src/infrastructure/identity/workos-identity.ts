@@ -2,7 +2,7 @@ import type { WorkOS } from "@workos-inc/node";
 import type { IdentityProvider } from "@/application/ports";
 import type { Role } from "@/domain/organization/organization";
 
-type WorkOSLike = {
+export type WorkOSLike = {
   organizations: Pick<WorkOS["organizations"], "createOrganization">;
   userManagement: Pick<WorkOS["userManagement"], "createOrganizationMembership" | "sendInvitation">;
 };

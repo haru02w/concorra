@@ -122,8 +122,8 @@ export const DEFAULT_GEMINI_MODELS = {
   embed: "gemini-embedding-001",
 } as const;
 
-export function createGeminiAiGateway(options: { apiKey: string; models?: Partial<Record<keyof GeminiModels, string>> }): GeminiAiGateway {
-  const google = createGoogle({ apiKey: options.apiKey });
+export function createGeminiAiGateway(options: { apiKey: string; models?: Partial<Record<keyof GeminiModels, string>>; fetch?: typeof fetch }): GeminiAiGateway {
+  const google = createGoogle({ apiKey: options.apiKey, fetch: options.fetch });
   const ids = { ...DEFAULT_GEMINI_MODELS, ...options.models };
   return new GeminiAiGateway({
     modelName: `${ids.extract} / ${ids.draft}`,
