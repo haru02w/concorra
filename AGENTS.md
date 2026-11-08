@@ -1,0 +1,4 @@
+- Never add any AI attribution to commits or PRs.
+- Use Conventional Commits with a leading gitmoji: `<gitmoji> <type>(<scope>): <subject>`.
+- Keep conversation KISS: simple, short, straight to the point.
+- Never assume anything; when information is missing or unclear, ask instead of guessing.
