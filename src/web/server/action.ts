@@ -25,11 +25,18 @@ export function formString(form: FormData, key: string): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
-export function formNumber(form: FormData, key: string): number | null {
-  const v = formString(form, key).replace(/\./g, "").replace(",", ".");
+/** Parses "1.234,56", "1234.56", "0,6" or "0.6". */
+export function parseNumber(raw: string): number | null {
+  let v = raw.replace(/\s|R\$/g, "");
   if (!v) return null;
+  if (v.includes(",")) v = v.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, "");
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
+}
+
+export function formNumber(form: FormData, key: string): number | null {
+  return parseNumber(formString(form, key));
 }
 
 export function formList(form: FormData, key: string): string[] {
