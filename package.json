@@ -9,16 +9,13 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "test:integration": "vitest run -c vitest.integration.config.ts",
     "worker": "tsx src/worker/main.ts",
     "worker:dev": "tsx watch src/worker/main.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "billing:products": "tsx scripts/abacatepay-products.ts",
-    "test:e2e": "vitest run -c vitest.e2e.config.ts"
+    "billing:products": "tsx scripts/abacatepay-products.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "4.0.114",

@@ -42,11 +42,10 @@ src/
                    documents, notifications, calendar, billing (+ mock):
       *.controller.ts   REST/route handlers (src/app route.ts files re-export them)
       *.actions.ts      Server actions used by the pages
-      *.service.ts      Service class with the feature's use cases (+ *.service.test.ts)
+      *.service.ts      Service class with the feature's use cases
       *.repository.ts   Repository interface + its Prisma implementation
       *.schemas.ts      zod request schemas
-    shared/        Deps and ports (gateways, jobs), actor/quota/upload helpers,
-                   in-memory fakes for the service tests
+    shared/        Deps and ports (gateways, jobs), actor/quota/upload helpers
     services.ts    Wires every service on top of Deps
   infrastructure/  Gateway adapters: Prisma client, PNCP, BrasilAPI, Gemini (AI SDK), RustFS (S3),
                    Resend, AbacatePay, WorkOS, Google/Microsoft calendars, pandoc, pg-boss,
@@ -106,14 +105,14 @@ JSON endpoints under `/api/v1` cover every use case and use the same session coo
 
 ### Tests
 
+End-to-end only, in `tests/` (needs `docker compose up`):
+
 ```bash
-pnpm test               # unit: domain, use cases (in-memory adapters), adapters + mock network
-pnpm test:integration   # repositories + a use-case flow on Postgres (needs docker compose up)
-pnpm test:e2e           # headless: boots web + worker (MOCK_EXTERNAL) on a <db>_e2e database and drives the REST API
+pnpm test               # boots web + worker (MOCK_EXTERNAL) on a <db>_e2e database and drives the REST API
 pnpm typecheck && pnpm lint
 ```
 
-`pnpm test:e2e` runs the full journey over HTTP: onboarding, rules, PNCP sync, matches and email, AI analysis with verified citations, the upgrade through the checkout webhook, vault validation, calendar OAuth, the bid pack, pricing and approval, downloads and ZIP export, and org isolation. Server logs go to `.next-e2e/logs/`. Set `E2E_BASE_URL` to point it at a server that is already running.
+It runs the full journey over HTTP: onboarding, rules, PNCP sync, matches and email, AI analysis with verified citations, the upgrade through the checkout webhook, vault validation, calendar OAuth, the bid pack, pricing and approval, downloads and ZIP export, and org isolation. Server logs go to `.next-e2e/logs/`. Set `E2E_BASE_URL` to point it at a server that is already running.
 
 ### Environment
 
