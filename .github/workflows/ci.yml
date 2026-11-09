@@ -5,8 +5,51 @@ on:
     branches: [master, main]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DATABASE_URL: postgresql://concorra:concorra@localhost:5432/concorra
+  APP_SECRET: ci-secret-ci-secret-ci-secret-ci-secret-ci
+  S3_ENDPOINT: http://localhost:9000
+  S3_ACCESS_KEY: concorra
+  S3_SECRET_KEY: concorra-secret
+
 jobs:
   check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm typecheck
+      - run: pnpm lint
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: next-${{ hashFiles('pnpm-lock.yaml') }}-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm build
+
+  test:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -26,23 +69,20 @@ jobs:
           RUSTFS_ACCESS_KEY: concorra
           RUSTFS_SECRET_KEY: concorra-secret
         ports: ["9000:9000"]
-    env:
-      DATABASE_URL: postgresql://concorra:concorra@localhost:5432/concorra
-      APP_SECRET: ci-secret-ci-secret-ci-secret-ci-secret-ci
-      S3_ENDPOINT: http://localhost:9000
-      S3_ACCESS_KEY: concorra
-      S3_SECRET_KEY: concorra-secret
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: corepack enable
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pandoc texlive-latex-recommended texlive-fonts-recommended texlive-lang-portuguese lmodern
+      # Skipping the man-db trigger makes the texlive install much faster.
+      - run: |
+          echo "set man-db/auto-update false" | sudo debconf-communicate
+          sudo dpkg-reconfigure man-db
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pandoc texlive-latex-recommended texlive-fonts-recommended texlive-lang-portuguese lmodern
       - run: pnpm db:generate
       - run: pnpm db:migrate
-      - run: pnpm typecheck
-      - run: pnpm lint
       - run: pnpm test
-      - run: pnpm build
