@@ -65,12 +65,12 @@ const schema = z.object({
   /** Escape hatch to allow MOCK_EXTERNAL with NODE_ENV=production. */
   MOCK_ALLOW_PRODUCTION: bool,
   /** Next.js build/dev output directory (the e2e suite uses its own). */
-  NEXT_DIST_DIR: z.string().default(".next"),
+  NEXT_DIST_DIR: optional.transform((v) => v ?? ".next"),
 
   /** e2e only: run the suite against an already running server. */
   E2E_BASE_URL: optional,
   /** e2e only: port for the server the suite boots. */
-  E2E_PORT: z.coerce.number().int().default(3123),
+  E2E_PORT: optional.transform((v) => (v ? Number(v) : 3123)).pipe(z.number().int()),
 });
 
 /** Variables `next build` needs: it runs without runtime secrets (e.g. in the Docker build). */
