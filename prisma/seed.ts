@@ -12,8 +12,6 @@ import { l2normalize } from "@/domain/shared/vector";
 import { noticeSearchText } from "@/domain/notice/notice";
 import { createContainer } from "@/infrastructure/container";
 
-const DEMO_CNPJ = process.env.DEMO_ORG_CNPJ || "99000000000159";
-
 const EDITAL_PAGES = [
   `PREFEITURA MUNICIPAL DE SANTA AURORA DO SUL (ENTE FICTÍCIO PARA DEMONSTRAÇÃO)
 EDITAL DE PREGÃO ELETRÔNICO Nº 90012/2026 — PROCESSO ADMINISTRATIVO Nº 4521/2026
@@ -60,6 +58,7 @@ const CERTIDOES = [
 
 async function main() {
   const { deps, services, storage, db, env } = createContainer("worker");
+  const DEMO_CNPJ = env.DEMO_ORG_CNPJ;
   await storage.ensureBucket();
   const now = new Date();
 

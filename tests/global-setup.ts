@@ -8,6 +8,7 @@ import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { createWriteStream, mkdirSync } from "node:fs";
 import pg from "pg";
 import type { TestProject } from "vitest/node";
+import { loadEnv } from "@/infrastructure/config/env";
 
 declare module "vitest" {
   export interface ProvidedContext {
@@ -17,9 +18,7 @@ declare module "vitest" {
 
 const children: ChildProcess[] = [];
 
-async function prepareDatabase(): Promise<string> {
-  const base = process.env.DATABASE_URL;
-  if (!base) throw new Error("DATABASE_URL is required (docker compose up -d)");
+async function prepareDatabase(base: string): Promise<string> {
   const url = new URL(base);
   const name = `${url.pathname.slice(1)}_e2e`;
   const admin = new pg.Client({ connectionString: base });
@@ -68,23 +67,23 @@ async function waitForHttp(url: string) {
 }
 
 export default async function setup(project: TestProject) {
-  if (process.env.E2E_BASE_URL) {
-    project.provide("baseUrl", process.env.E2E_BASE_URL);
+  const config = loadEnv();
+  if (config.E2E_BASE_URL) {
+    project.provide("baseUrl", config.E2E_BASE_URL);
     return;
   }
-  const port = Number(process.env.E2E_PORT ?? 3123);
+  const port = config.E2E_PORT;
   const baseUrl = `http://localhost:${port}`;
   const { NODE_ENV: _nodeEnv, ...inherited } = process.env;
   const env: Record<string, string | undefined> = {
     ...inherited,
-    DATABASE_URL: await prepareDatabase(),
+    DATABASE_URL: await prepareDatabase(config.DATABASE_URL),
     APP_URL: baseUrl,
     MOCK_EXTERNAL: "true",
     DEMO_MODE: "false",
     S3_BUCKET: "concorra-e2e",
     NEXT_DIST_DIR: ".next-e2e",
     WORKER_CONCURRENCY: "2",
-    APP_SECRET: process.env.APP_SECRET ?? "e2e-secret-e2e-secret-e2e-secret-e2e-secret",
     ABACATEPAY_WEBHOOK_SECRET: "e2e-webhook-secret",
   };
   await start("worker", ["tsx", "src/worker/main.ts"], env, /\[worker\] \d+ queues/);

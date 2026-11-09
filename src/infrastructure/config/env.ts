@@ -60,7 +60,21 @@ const schema = z.object({
 
   PANDOC_BIN: z.string().default("pandoc"),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).default(2),
+
+  NODE_ENV: z.enum(["development", "production", "test"]).optional(),
+  /** Escape hatch to allow MOCK_EXTERNAL with NODE_ENV=production. */
+  MOCK_ALLOW_PRODUCTION: bool,
+  /** Next.js build/dev output directory (the e2e suite uses its own). */
+  NEXT_DIST_DIR: z.string().default(".next"),
+
+  /** e2e only: run the suite against an already running server. */
+  E2E_BASE_URL: optional,
+  /** e2e only: port for the server the suite boots. */
+  E2E_PORT: z.coerce.number().int().default(3123),
 });
+
+/** Variables `next build` needs: it runs without runtime secrets (e.g. in the Docker build). */
+const buildSchema = schema.pick({ NEXT_DIST_DIR: true });
 
 export type Env = z.infer<typeof schema>;
 
@@ -73,11 +87,16 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid environment: ${issues}`);
   }
-  if (parsed.data.MOCK_EXTERNAL && source.NODE_ENV === "production" && source.MOCK_ALLOW_PRODUCTION !== "true") {
+  if (parsed.data.MOCK_EXTERNAL && parsed.data.NODE_ENV === "production" && !parsed.data.MOCK_ALLOW_PRODUCTION) {
     throw new Error("MOCK_EXTERNAL must not run in production (it enables passwordless mock login)");
   }
   if (source === process.env) cached = parsed.data;
   return parsed.data;
+}
+
+/** Build-time subset of the environment, for next.config.ts. */
+export function loadBuildEnv(source: NodeJS.ProcessEnv = process.env): z.infer<typeof buildSchema> {
+  return buildSchema.parse(source);
 }
 
 /** Real WorkOS AuthKit sessions (disabled in mock mode, which uses local sessions). */

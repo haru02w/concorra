@@ -29,12 +29,14 @@ export async function signOut() {
   const jar = await cookies();
   const wasLocal = jar.has(SESSION_COOKIE);
   jar.delete(SESSION_COOKIE);
-  if (!wasLocal && workosConfigured(getContainer().env)) await workosSignOut({ returnTo: process.env.APP_URL });
+  if (!wasLocal && workosConfigured(getContainer().env)) await workosSignOut({ returnTo: getContainer().env.APP_URL });
   redirect("/");
 }
 
 /** GET /callback: WorkOS AuthKit redirect. */
-export const callback = handleAuth({ returnPathname: "/radar", baseURL: process.env.APP_URL });
+export function callback(request: NextRequest) {
+  return handleAuth({ returnPathname: "/radar", baseURL: getContainer().env.APP_URL })(request);
+}
 
 /** GET /demo: no-friction demo login (Hack Brasil 7.2/7.3) into the seeded fictitious company. */
 export async function demo() {

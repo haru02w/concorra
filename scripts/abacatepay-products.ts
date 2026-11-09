@@ -1,8 +1,9 @@
 /** Creates the Pro/Business monthly products in AbacatePay and prints their ids for .env. */
 import "dotenv/config";
+import { loadEnv } from "@/infrastructure/config/env";
 import { ensureProducts } from "@/infrastructure/payments/abacatepay";
 
-const apiKey = process.env.ABACATEPAY_API_KEY;
+const apiKey = loadEnv().ABACATEPAY_API_KEY;
 if (!apiKey) {
   console.error("Set ABACATEPAY_API_KEY first.");
   process.exit(1);
