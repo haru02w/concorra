@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concorra: licitações certas, documentos prontos</title>
+<meta name="description" content="O Concorra monitora o PNCP, indica os editais que valem a pena e prepara a documentação para a empresa participar de licitações. Projeto do Hack Brasil 2026.">
+<style>
+:root {
+  --bg: #f6f8f9;
+  --surface: #ffffff;
+  --ink: #17263b;
+  --muted: #55657a;
+  --line: #d9e0e6;
+  --accent: #1d6b57;
+  --accent-soft: #e4f1ec;
+  --accent-ink: #14503f;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+a { color: var(--accent-ink); text-underline-offset: 3px; }
+a:hover { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.2; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.4rem, 5.5vw, 3.6rem); }
+h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 1rem; }
+h3 { font-size: 1.15rem; margin-bottom: 0.35rem; }
+p { margin: 0 0 1rem; max-width: 62ch; }
+
+/* topo */
+.topbar { border-bottom: 1px solid var(--line); background: var(--surface); }
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 0.9rem; padding-bottom: 0.9rem; flex-wrap: wrap; }
+.brand { font-family: var(--serif); font-size: 1.35rem; font-weight: 700; color: var(--ink); text-decoration: none; }
+.topbar nav { display: flex; gap: 1.5rem; font-size: 0.95rem; }
+.topbar nav a { color: var(--muted); text-decoration: none; }
+.topbar nav a:hover { color: var(--ink); text-decoration: underline; }
+
+/* hero */
+.hero { padding: 4.5rem 0 4rem; }
+.hero .wrap { display: grid; grid-template-columns: 1.15fr 1fr; gap: 3.5rem; align-items: center; }
+.tagline { font-family: var(--serif); font-size: 1.4rem; color: var(--accent-ink); margin: 0.9rem 0 1.4rem; }
+.lead { font-size: 1.15rem; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.75rem; }
+.btn { display: inline-block; padding: 0.7rem 1.25rem; border-radius: 6px; font-weight: 600; font-size: 0.98rem; text-decoration: none; border: 1.5px solid var(--accent); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-ink); color: #fff; }
+.btn-secondary { background: transparent; color: var(--accent-ink); }
+.btn-secondary:hover { background: var(--accent-soft); color: var(--accent-ink); }
+
+/* exemplo de citação verificada */
+.sample { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1.4rem 1.5rem; box-shadow: 0 1px 0 rgba(23,38,59,0.04); }
+.sample-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
+.sample dl { margin: 0; }
+.sample dt { font-size: 0.85rem; color: var(--muted); }
+.sample dd { margin: 0 0 0.9rem; font-weight: 600; }
+.sample blockquote { margin: 0 0 1rem; padding: 0.6rem 0 0.6rem 1rem; border-left: 3px solid var(--accent); font-family: var(--serif); font-size: 1.02rem; line-height: 1.5; }
+.badge { display: inline-block; background: var(--accent-soft); color: var(--accent-ink); font-size: 0.85rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 999px; }
+.sample-note { font-size: 0.82rem; color: var(--muted); margin: 1rem 0 0; }
+
+/* seções */
+section { padding: 3.5rem 0; border-top: 1px solid var(--line); }
+.intro { color: var(--muted); }
+.cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem 3rem; margin-top: 1.75rem; }
+.cols p { margin: 0; color: var(--muted); }
+.steps { list-style: none; counter-reset: passo; padding: 0; margin: 1.75rem 0 0; display: grid; gap: 1.25rem; }
+.steps li { counter-increment: passo; display: grid; grid-template-columns: 2.4rem 1fr; gap: 0.9rem; }
+.steps li::before { content: counter(passo); width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; display: grid; place-items: center; }
+.steps p { margin: 0; color: var(--muted); }
+.trust { background: var(--surface); }
+.trust ul { margin: 1.5rem 0 0; padding: 0; list-style: none; display: grid; gap: 1.1rem; }
+.trust li { padding-left: 1.4rem; border-left: 3px solid var(--accent); }
+.trust li p { margin: 0; color: var(--muted); }
+.stack { color: var(--muted); }
+.stack strong { color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); background: var(--surface); padding: 2rem 0 2.5rem; font-size: 0.95rem; color: var(--muted); }
+footer p { margin: 0 0 0.4rem; max-width: none; }
+
+@media (max-width: 820px) {
+  .hero .wrap { grid-template-columns: 1fr; gap: 2.5rem; }
+  .cols { grid-template-columns: 1fr; gap: 1.5rem; }
+  .hero { padding: 3rem 0; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#topo">Concorra</a>
+    <nav aria-label="Seções da página">
+      <a href="#para-quem">Para quem</a>
+      <a href="#o-que-faz">O que faz</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#confianca">Confiança</a>
+    </nav>
+  </div>
+</header>
+
+<main id="topo">
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Concorra</h1>
+        <p class="tagline">Licitações certas, documentos prontos.</p>
+        <p class="lead">O Concorra acompanha as contratações públicas brasileiras no PNCP, mostra à empresa quais editais merecem atenção e, quando ela decide participar, prepara a documentação necessária para concorrer.</p>
+        <p>A empresa sempre revisa, aprova e envia a proposta por conta própria. O Concorra nunca envia nada em seu nome.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="https://github.com/haru02w/concorra">Ver o repositório</a>
+          <a class="btn btn-secondary" href="https://github.com/haru02w/concorra/blob/main/docs/SPEC.md">Ler a especificação</a>
+        </div>
+      </div>
+
+      <aside class="sample" aria-label="Exemplo ilustrativo de citação verificada">
+        <div class="sample-head">
+          <span>Análise de edital</span>
+          <span class="badge">Citação verificada</span>
+        </div>
+        <dl>
+          <dt>Exigência identificada</dt>
+          <dd>Certidão negativa de débitos trabalhistas</dd>
+          <dt>Origem no edital</dt>
+          <dd>edital.pdf, página 14</dd>
+        </dl>
+        <blockquote>“A licitante deverá apresentar certidão negativa de débitos trabalhistas, válida na data da sessão.”</blockquote>
+        <p class="sample-note">Exemplo fictício. Cada fato extraído pela IA traz arquivo, página e trecho literal, conferidos por código no texto armazenado do edital.</p>
+      </aside>
+    </div>
+  </div>
+
+  <section id="para-quem">
+    <div class="wrap">
+      <h2>Para quem é</h2>
+      <p>Para empresas que vendem ao setor público, especialmente micro, pequenas e médias, que não têm uma equipe dedicada a licitações. Para elas, achar o edital certo e montar os documentos de habilitação consome tempo e traz risco de erro: um prazo perdido ou uma certidão vencida pode desclassificar a proposta.</p>
+      <p>O Concorra reúne esse trabalho em um só fluxo, do aviso até a entrega dos documentos, e mantém cada etapa verificável.</p>
+    </div>
+  </section>
+
+  <section id="o-que-faz">
+    <div class="wrap">
+      <h2>O que o Concorra faz</h2>
+      <p class="intro">Do primeiro cadastro até o pacote final de participação.</p>
+      <div class="cols">
+        <div>
+          <h3>Perfil da empresa</h3>
+          <p>Consulta de CNPJ, CNAEs, regiões, faixa de valores e porte. Os atestados de experiência são lidos por IA e indexados.</p>
+        </div>
+        <div>
+          <h3>Radar de editais</h3>
+          <p>Ingestão agendada do PNCP para todo o Brasil, incluindo retificações. PDFs digitalizados passam por OCR.</p>
+        </div>
+        <div>
+          <h3>Regras e alertas</h3>
+          <p>Filtros por palavra-chave, UF, município, modalidade, valor e órgão, além de similaridade com o perfil. Avisos por e-mail e na própria plataforma.</p>
+        </div>
+        <div>
+          <h3>Análise com evidências</h3>
+          <p>Riscos, nota de aderência, lista de documentos faltantes e recomendação, todos ligados a trechos do edital.</p>
+        </div>
+        <div>
+          <h3>Cofre de documentos</h3>
+          <p>Certidões e outros arquivos com tipo, CNPJ e validade extraídos e conferidos, links para os portais emissores e alertas de vencimento.</p>
+        </div>
+        <div>
+          <h3>Pacote de participação</h3>
+          <p>Checklist de habilitação, preços de referência de contratos anteriores, declarações, proposta e carta de apresentação em DOCX e PDF, com instruções de envio e exportação em ZIP.</p>
+        </div>
+        <div>
+          <h3>Calendário</h3>
+          <p>Prazos enviados ao Google Calendar ou ao Outlook, atualizados quando o edital é retificado e removidos quando é cancelado.</p>
+        </div>
+        <div>
+          <h3>Planos e limites</h3>
+          <p>Planos Free, Pro e Business, com assinatura via AbacatePay e limites aplicados por organização.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <div class="wrap">
+      <h2>Como funciona</h2>
+      <ol class="steps">
+        <li><div><h3>Monitorar</h3><p>O sistema lê o PNCP continuamente e compara cada edital com o perfil e as regras da empresa.</p></div></li>
+        <li><div><h3>Analisar</h3><p>Para os editais selecionados, a IA extrai exigências, prazos e riscos, e o código confere cada citação contra o texto original.</p></div></li>
+        <li><div><h3>Decidir</h3><p>A empresa escolhe participar ou ignorar, com a opção de registrar o motivo.</p></div></li>
+        <li><div><h3>Preparar</h3><p>O Concorra monta o checklist de habilitação, os documentos e a proposta, e aponta o que ainda falta.</p></div></li>
+        <li><div><h3>Revisar e enviar</h3><p>Cada documento exige aprovação explícita. O envio é feito pela empresa, seguindo as instruções geradas.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="confianca" class="trust">
+    <div class="wrap">
+      <h2>Como o Concorra mantém a confiança</h2>
+      <ul>
+        <li>
+          <h3>Nada é enviado automaticamente</h3>
+          <p>O usuário revisa, aprova e submete a proposta. A decisão final é sempre da empresa.</p>
+        </li>
+        <li>
+          <h3>A IA não fala sem evidência</h3>
+          <p>Um validador determinístico confere cada trecho citado. Se a verificação falha, o dado é extraído de novo uma vez e, persistindo a falha, é marcado como não verificado.</p>
+        </li>
+        <li>
+          <h3>Preços nunca são preenchidos sozinhos</h3>
+          <p>Os valores de referência vêm de contratos anteriores e servem de apoio. O preço da proposta é definido pelo usuário.</p>
+        </li>
+        <li>
+          <h3>Orientação, não parecer jurídico</h3>
+          <p>As análises e os documentos gerados são apoio à decisão e devem ser revisados pelo responsável da empresa.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="tecnologia">
+    <div class="wrap">
+      <h2>Tecnologia</h2>
+      <p class="stack">Aplicação <strong>Next.js</strong> e um worker <strong>Node.js</strong> com filas <strong>pg-boss</strong>, a partir de uma única base de código. Os dados ficam em <strong>PostgreSQL com pgvector</strong> e os arquivos em armazenamento compatível com S3. A IA usa a API do <strong>Gemini</strong>, e os documentos são gerados com <strong>pandoc</strong> e LaTeX. A regra de negócio fica em um núcleo puro, sem entrada e saída, coberto por testes de ponta a ponta.</p>
+      <p>O código é aberto, sob licença MIT, e a documentação completa está no <a href="https://github.com/haru02w/concorra">repositório</a>.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Concorra</strong>, projeto desenvolvido para o <a href="https://hackbrasil.com/">Hack Brasil 2026</a>.</p>
+    <p>Trilha Logística &amp; Automação. Licença MIT.</p>
+    <p>Os dados de demonstração são fictícios.</p>
+  </div>
+</footer>
+
+</body>
+</html>
